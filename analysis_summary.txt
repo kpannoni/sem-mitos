@@ -1,0 +1,32 @@
+Date:  2024-06-25
+
+Dataset:  CTL and KO CA2
+
+Animals:  MCC273, MCC282, MCC277, MCC270, MCC276, MCC274
+
+Analyzed:  6 mice analyzed (3 stubs / mouse)
+
+Groups:  3 MCC Cre - mice, 3 MCC Cre + mice
+
+Sampling:  Every 8th tile
+
+Tile Size:  6144 x 4969 pixels
+
+N Tiles:  439 Basal; 574 Proximal; 539 Distal (Total = 1552)
+
+Processing:  
+23 mitochondria larger than 2.1 um2 or smaller than 0.01 um2 and 31485 dendrite segments less than 0.4 um2 were removed.
+Area and diameter converted from pixels to micron squared.
+ Count and mitochondrial mass were normalized to the total area analyzed. MCU KO data was normalized to the overal mean of the CTL.
+
+Data CSV:  Biodock_AI_V6_output_den_mitos_dendrites_cKO_CTL_CA2.csv
+
+Biodock AI:  Mitochondria in MCU KO and WT mice (V6)
+
+Analysis Code:  em_image_mito_analysis_biodock_6_20_2024_cleaned.py
+
+Excluded:  5 tiles
+Farris 270-B Stub 1 dot Proximal_Q4_Tile_006-005.tif, MCC274-B_stub4dot_redo_Proximal_Tile_009-008.tif, MCC276-A_stub5dot_Basal_Tile_004-006.tif, MCC276-A_stub6_Basal_Tile_013-008.tif, MCC276-A_stub6_Proximal_Tile_003-004.tif
+
+Notes:  Analysis of CTL and MCU KO data in CA2 using version 6 of the Biodock AI. Denderitic mitochondria and dendrites were segmented with a confidence threshold of 0.4. This dataset was used for Figure 4 and supplemental figures 2-4.
+

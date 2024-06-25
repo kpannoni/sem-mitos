@@ -1,0 +1,16 @@
+,Contrast,A,B,Paired,Parametric,U-val,alternative,p-unc,p-corr,p-adjust,hedges
+0,Group,MCC Cre +_Basal,MCC Cre +_Distal,False,False,7724389.5,two-sided,7.191477807244137e-28,0.0,sidak,-0.274692169789796
+1,Group,MCC Cre +_Basal,MCC Cre +_Proximal,False,False,5861287.5,two-sided,0.10500771452906663,0.8106395059919297,sidak,-0.04782636580878224
+2,Group,MCC Cre +_Basal,MCC Cre -_Basal,False,False,3081969.5,two-sided,1.6905093811764124e-07,2.5357610713427903e-06,sidak,-0.0928597060710247
+3,Group,MCC Cre +_Basal,MCC Cre -_Distal,False,False,6171726.0,two-sided,3.758701183252828e-39,0.0,sidak,-0.3112513905392002
+4,Group,MCC Cre +_Basal,MCC Cre -_Proximal,False,False,3741932.5,two-sided,7.846866221377451e-11,1.177030140020463e-09,sidak,-0.18792895603776424
+5,Group,MCC Cre +_Distal,MCC Cre +_Proximal,False,False,14633576.5,two-sided,1.414423326260532e-42,0.0,sidak,0.22962626868458816
+6,Group,MCC Cre +_Distal,MCC Cre -_Basal,False,False,7894147.5,two-sided,2.9273344087669208e-06,4.3909116367757406e-05,sidak,0.205416180425005
+7,Group,MCC Cre +_Distal,MCC Cre -_Distal,False,False,15975049.0,two-sided,0.003773980643974268,0.05513838480585065,sidak,-0.02887658207047987
+8,Group,MCC Cre +_Distal,MCC Cre -_Proximal,False,False,9571133.5,two-sided,0.00033315386873528037,0.004985670731346259,sidak,0.1112781794358197
+9,Group,MCC Cre +_Proximal,MCC Cre -_Basal,False,False,4218662.5,two-sided,2.3778403980697806e-12,3.5668135112132404e-11,sidak,-0.03302861916618273
+10,Group,MCC Cre +_Proximal,MCC Cre -_Distal,False,False,8482415.5,two-sided,3.3794960807867905e-56,0.0,sidak,-0.2632769593140089
+11,Group,MCC Cre +_Proximal,MCC Cre -_Proximal,False,False,5126059.5,two-sided,2.809208136396498e-17,0.0,sidak,-0.1298540850781887
+12,Group,MCC Cre -_Basal,MCC Cre -_Distal,False,False,5548585.5,two-sided,4.2622862151045585e-12,6.393385820757658e-11,sidak,-0.24021671896326716
+13,Group,MCC Cre -_Basal,MCC Cre -_Proximal,False,False,3356952.5,two-sided,0.27600818472933586,0.9921294542475252,sidak,-0.10730283197289267
+14,Group,MCC Cre -_Distal,MCC Cre -_Proximal,False,False,8206073.0,two-sided,2.8290208338534974e-09,4.2435311042865465e-08,sidak,0.142473385962949

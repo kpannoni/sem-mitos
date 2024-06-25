@@ -1,0 +1,16 @@
+,Contrast,A,B,Paired,Parametric,U-val,alternative,p-unc,p-corr,p-adjust,hedges
+0,Group,MCC Cre +_Basal,MCC Cre +_Distal,False,False,10610051.0,two-sided,1.628878629591817e-42,0.0,sidak,0.4535366916320645
+1,Group,MCC Cre +_Basal,MCC Cre +_Proximal,False,False,5679673.0,two-sided,0.5342395418424806,0.9999894697367235,sidak,0.02870583496582779
+2,Group,MCC Cre +_Basal,MCC Cre -_Basal,False,False,3181429.5,two-sided,0.0006964711626021259,0.0103962882665255,sidak,-0.10785242970534874
+3,Group,MCC Cre +_Basal,MCC Cre -_Distal,False,False,8476690.5,two-sided,7.485956426668966e-23,0.0,sidak,0.3495717306277772
+4,Group,MCC Cre +_Basal,MCC Cre -_Proximal,False,False,3749851.0,two-sided,1.7949023166812924e-10,2.6923530072053836e-09,sidak,-0.17097148471488077
+5,Group,MCC Cre +_Distal,MCC Cre +_Proximal,False,False,10092989.5,two-sided,4.979984697565276e-66,0.0,sidak,-0.4285130110548959
+6,Group,MCC Cre +_Distal,MCC Cre -_Basal,False,False,5695806.5,two-sided,8.325759625966016e-62,0.0,sidak,-0.5904087006829587
+7,Group,MCC Cre +_Distal,MCC Cre -_Distal,False,False,15637133.0,two-sided,1.6328086116803022e-06,2.4491849240027008e-05,sidak,-0.10217894016279039
+8,Group,MCC Cre +_Distal,MCC Cre -_Proximal,False,False,6601205.5,two-sided,2.0997817722458705e-102,0.0,sidak,-0.656317830943638
+9,Group,MCC Cre +_Proximal,MCC Cre -_Basal,False,False,4479481.5,two-sided,0.0008979792997349643,0.01338534955965165,sidak,-0.1433127277014567
+10,Group,MCC Cre +_Proximal,MCC Cre -_Distal,False,False,12064266.0,two-sided,3.318280944220267e-35,0.0,sidak,0.32583702100633166
+11,Group,MCC Cre +_Proximal,MCC Cre -_Proximal,False,False,5271874.5,two-sided,2.5089792499346938e-11,3.7634728666802175e-10,sidak,-0.2095635724571814
+12,Group,MCC Cre -_Basal,MCC Cre -_Distal,False,False,7315638.5,two-sided,3.765144035009182e-39,0.0,sidak,0.4794050850764385
+13,Group,MCC Cre -_Basal,MCC Cre -_Proximal,False,False,3277387.0,two-sided,0.010977240418354376,0.15258863014588697,sidak,-0.06142085763840846
+14,Group,MCC Cre -_Distal,MCC Cre -_Proximal,False,False,5820060.0,two-sided,5.767789651588931e-69,0.0,sidak,-0.5458278218354524
