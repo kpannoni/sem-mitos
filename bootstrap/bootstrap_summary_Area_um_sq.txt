@@ -1,0 +1,9 @@
+Data was re-sampled at the level of Animal (3), Section ID (3), and Tile (50).
+ Mitos sampled: 100 
+
+The bootstrapped medians for Area_um_sq were calculated (nboot = 10000)
+ for the groups ['MCC Cre -', 'MCC Cre +']
+The means are sorted by column in order of ['Basal', 'Proximal', 'Distal']
+
+2024-03-13
+Code: c:\users\pannoni\documents\lab stuff\python_scripts\mito_bootstrap_median_for_biodock_3_6_2024.py
