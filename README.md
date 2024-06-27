@@ -33,19 +33,18 @@ View the exported data from Biodock [here](Biodock_AI_V6_output_den_mitos_dendri
 7. Create violin plots and run two-way ANOVAs with sidak post hoc on each metric of interest
 8. Create correlation plots of mitochondria count versus total mitochondria area per 100 um2 for each layer and each genotype
 
+## Validation of AI performance with manual spot check
+
+A manual spot check of about 1% of the dataset found an accuracy of about 97% across both genotypes.
+
+|   AI Performance   | CTL             | cKO            |   
+| ------------------ |:---------------:|:--------------:|
+| total objects      | 1081            |      1337      |
+| % correct          | 97.1 %          |     97.5 %      |
+| missed objects / 100 um2   | 1.1             |      1.4       |
+
+
 ## Results Summary:
-
-<!--
-
-| Genotype           | Dendritic Layer | Median Area    |   Median Feret Diameter | Median Aspect Ratio   | Median Distance to NN | Median Count per 100um2 | N mitochondria |
-| ------------------ |:---------------:|:--------------:|:-----------------------:|:---------------------:|:---------------------:|:-----------------------:|:--------------:|
-| Cre - (CTL)        | Basal           |      0.15      |        0.59             |                       |                       |                         |                |
-| Cre -              | Proximal        |      0.13      |        0.58             |                       |                       |                         |                |
-| Cre -              | Distal          |      0.15      |        0.62             |                       |                       |                         |                |
-| Cre + (cKO)        | Basal           |      0.13      |        0.54             |                       |                       |                         |                |
-| Cre +              | Proximal        |      0.11      |        0.52             |                       |                       |                         |                |
-| Cre +              | Distal          |      0.15      |        0.62             |                       |                       |                         |                |
--->
 
 ### Wild-type mitochondria across CA2 layers
 
@@ -91,8 +90,10 @@ View the exported data from Biodock [here](Biodock_AI_V6_output_den_mitos_dendri
 
 ## Hierarchical statistical bootstrap:
 
+<img src="https://github.com/kpannoni/sem-mitos/bootstrap/bootstrap_schematic.png" alt="schematic of the bootstrap analysis" width="40"/>
+
 <!-- describe the bootstrap and maybe include schematic. Include description of sampling at each level. -->
-Due to the hierarchical nature of the dataset, a hierarchical bootstrap was performed on mitochondria area and mitochondria count per 100um2 based on [Saravanan et al, 2020](https://nbdt.scholasticahq.com/article/13927-application-of-the-hierarchical-bootstrap-to-multi-level-data-in-neuroscience). Data was randomly sampled at the level of animal, stub (hippocampal section) and then tile. The median of the resampled data was calculated for each group (layer and genotype). For the bootstrap of individual mitochondria area, the data was additionally resampled at the level of mitochondria. This process was repeated a total of 10,000 times to generate a population of 10,000 medians. We then compared groups and calculated the proportion of bootstrap repetitions where the first group was larger than the second group.
+Due to the hierarchical nature of the dataset, a hierarchical bootstrap was performed on mitochondria area and mitochondria count per 100um2 based on [Saravanan et al, 2020](https://nbdt.scholasticahq.com/article/13927-application-of-the-hierarchical-bootstrap-to-multi-level-data-in-neuroscience). Data was randomly sampled at the level of animal, stub (hippocampal section) and then tile. The median of the resampled data was calculated for each group (layer and genotype). For the bootstrap of individual mitochondria area, the data was additionally resampled at the level of mitochondria. This process was repeated a total of 10,000 times to generate a population of 10,000 medians. We then compared across layers and genotypes by calculating the proportion of bootstrap repetitions where the first group was larger than the second group.
 
 #### Mitochondria Area
 
