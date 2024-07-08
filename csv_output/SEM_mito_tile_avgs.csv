@@ -1,4 +1,4 @@
-Tile,Animal,Genotype,Layer,Stub,Section ID,Area_um_sq,Major Length um,Minor Length um,Feret diam um,Aspect Ratio,Perimeter um,Count,Total_mito_Area_um_sq
+Tile,Animal,Genotype,Layer,Stub,Section_ID,Area_um_sq,Major_Length_um,Minor_Length_um,Feret_diam_um,Aspect_Ratio,Perimeter_um,Count,Total_mito_Area_um_sq
 Farris 270-B Stub 1 dot Basal_Q1_Tile_001-001.tif,MCC270,MCC Cre -,Basal,Stub 1 dot,MCC270_Stub 1 dot,0.18,0.54,0.37,0.55,1.44,1.7,8,1.46
 Farris 270-B Stub 1 dot Basal_Q1_Tile_001-005.tif,MCC270,MCC Cre -,Basal,Stub 1 dot,MCC270_Stub 1 dot,0.26,0.76,0.45,0.77,1.71,2.34,8,2.09
 Farris 270-B Stub 1 dot Basal_Q1_Tile_002-003.tif,MCC270,MCC Cre -,Basal,Stub 1 dot,MCC270_Stub 1 dot,0.31,0.9,0.42,0.91,2.54,2.59,10,3.11

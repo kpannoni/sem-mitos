@@ -1,4 +1,4 @@
-Genotype,Layer,Area_um_sq,Aspect Ratio,Perimeter um,Feret diam um,NN_Dist_um,Count 100um2,N_mitos
+Genotype,Layer,Area_um_sq,Aspect_Ratio,Perimeter_um,Feret_diam_um,NN_Dist_um,Count_100um2,N_mitos
 MCC Cre +,Basal,0.13,1.58,1.66,0.54,1.36,13.0,2860
 MCC Cre +,Proximal,0.11,1.82,1.56,0.52,1.37,13.0,4007
 MCC Cre +,Distal,0.15,1.94,1.8,0.61,1.13,23.0,6299

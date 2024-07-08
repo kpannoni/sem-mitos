@@ -1,4 +1,4 @@
-Genotype,Animal,Section ID,Layer,Area_um_sq,Major Length um,Minor Length um,Feret diam um,Aspect Ratio,Perimeter um,Eccentricity,NN_Dist_um,Norm Area,Norm Diam,Norm Aspect,Norm Dist,Total_Count,Total_mito_mass,Tiles per Stub,Total_Area_um_sq,Total_Count_per_area,Total_mito_mass_per_area
+Genotype,Animal,Section_ID,Layer,Area_um_sq,Major_Length_um,Minor_Length_um,Feret_diam_um,Aspect_Ratio,Perimeter_um,Eccentricity,NN_Dist_um,Norm_Area,Norm_Diam,Norm_Aspect,Norm_Dist,Total_Count,Total_mito_mass,Tiles_per_Stub,Total_Area_um_sq,Total_Count_per_area,Total_mito_mass_per_area
 MCC Cre +,MCC274,MCC274_Stub 1 dot redo,Basal,0.214,0.646,0.413,0.667,1.28,2.126,0.625,1.923,1.06,0.89,0.55,1.25,211,53.618303999999995,23,2300,0.09173913043478261,0.02331230608695652
 MCC Cre +,MCC274,MCC274_Stub 1 dot redo,Proximal,0.165,0.599,0.341,0.606,1.655,1.877,0.797,1.537,0.82,0.81,0.71,1.005,336,72.075392,30,3000,0.112,0.024025130666666665
 MCC Cre +,MCC274,MCC274_Stub 1 dot redo,Distal,0.193,0.688,0.351,0.702,1.9,2.057,0.85,1.258,0.96,0.94,0.81,0.82,535,137.79136,29,2900,0.18448275862068966,0.047514262068965515

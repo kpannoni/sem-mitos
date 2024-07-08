@@ -1,4 +1,4 @@
-Genotype,Animal,Layer,Area_um_sq,Major Length um,Minor Length um,Feret diam um,Aspect Ratio,Perimeter um,NN_Dist_um,Norm Area,Norm Diam,Norm Aspect,Norm Dist,Count_100um2,Total_Count,Tiles per Animal,Total_Area_um_sq,Total_mito_mass,Total_mito_mass_per_area
+Genotype,Animal,Layer,Area_um_sq,Major_Length_um,Minor_Length_um,Feret_diam_um,Aspect_Ratio,Perimeter_um,NN_Dist_um,Norm_Area,Norm_Diam,Norm_Aspect,Norm_Dist,Count_100um2,Total_Count,Tiles_per_Animal,Total_Area_um_sq,Total_mito_mass,Total_mito_mass_per_area
 MCC Cre -,MCC270,Basal,0.156,0.604,0.322,0.611,1.655,1.863,1.498,0.775,0.82,0.71,0.98,10.0,748,73,7300,151.528256,0.020757295342465752
 MCC Cre -,MCC270,Proximal,0.153,0.649,0.296,0.655,2.07,1.892,1.77,0.76,0.88,0.89,1.15,8.0,745,92,9200,150.300352,0.016336994782608697
 MCC Cre -,MCC270,Distal,0.178,0.7,0.327,0.705,2.05,2.049,1.343,0.88,0.94,0.88,0.88,15.0,1269,80,8000,304.617984,0.038077247999999994

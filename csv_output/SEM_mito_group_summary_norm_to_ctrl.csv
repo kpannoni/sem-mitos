@@ -1,4 +1,4 @@
-Genotype,Layer,Norm Area,Norm Aspect,Norm Diam,Norm Dist,Norm Total Area,Norm Count
+Genotype,Layer,Norm_Area,Norm_Aspect,Norm_Diam,Norm_Dist,Norm Total Area,Norm Count
 MCC Cre +,Basal,0.65,0.68,0.72,0.89,0.84,0.95
 MCC Cre +,Proximal,0.56,0.78,0.7,0.89,0.76,0.97
 MCC Cre +,Distal,0.72,0.83,0.81,0.73,1.67,1.63

@@ -96,13 +96,13 @@ mito_data["Area_um_sq"] = mito_data["Area"] * scale_um_sq
 dendrite_data["Den_Area_um_sq"] = dendrite_data["Area"] * scale_um_sq
 
 # convert all lengths from pixels to microns
-mito_data["Major Length um"] = mito_data["Length of Major Axis"] * scale_um_per_px
-mito_data["Minor Length um"] = mito_data["Length of Minor Axis"] * scale_um_per_px
-mito_data["Perimeter um"] = mito_data["Perimeter"] * scale_um_per_px
-mito_data["Feret diam um"] = mito_data["Feret Diameter Maximum"] * scale_um_per_px
+mito_data["Major_Length_um"] = mito_data["Length of Major Axis"] * scale_um_per_px
+mito_data["Minor_Length_um"] = mito_data["Length of Minor Axis"] * scale_um_per_px
+mito_data["Perimeter_um"] = mito_data["Perimeter"] * scale_um_per_px
+mito_data["Feret_diam_um"] = mito_data["Feret Diameter Maximum"] * scale_um_per_px
 
-dendrite_data["Den Width um"] = dendrite_data["Length of Minor Axis"] * scale_um_per_px
-dendrite_data["Den Length um"] = dendrite_data["Length of Major Axis"] * scale_um_per_px
+dendrite_data["Den_Width_um"] = dendrite_data["Length of Minor Axis"] * scale_um_per_px
+dendrite_data["Den_Length_um"] = dendrite_data["Length of Major Axis"] * scale_um_per_px
 
 print("\nRemoving mitochondria larger than 2 microns squared or smaller than 0.01 microns squared...")
 
@@ -133,10 +133,10 @@ else:
 
 print("\nCalculating the mitochondria aspect ratio...")
 # Calculate the aspect ratio using the major and minor axes, although we will probably just use the length of the major axes instead
-mito_data["Aspect Ratio"] = round(mito_data["Length of Major Axis"] / mito_data["Length of Minor Axis"],2)
+mito_data["Aspect_Ratio"] = round(mito_data["Length of Major Axis"] / mito_data["Length of Minor Axis"],2)
 
 # We'll have to make a unique name by combining animal ID and stub since some animals have stubs with the same names
-mito_data["Section ID"] = mito_data["Animal"] + "_" + mito_data["Stub"]
+mito_data["Section_ID"] = mito_data["Animal"] + "_" + mito_data["Stub"]
 
 #%% Now let's do a nearest neighbor analysis to get the distance from each mitochondria to the closest mitochondria within the same image tile.
 
@@ -204,7 +204,7 @@ print("\nGetting the number and total area of mitochondria and dendrites in each
 
 # group the mito data by tile to get averages for the metrics
 mito_avgs = mito_data.groupby("Tile").mean(numeric_only=True) # get the tile averages
-meta_cols = mito_data.groupby("Tile").agg({"Animal": "first", "Genotype": "first", "Layer": "first", "Stub": "first", "Section ID": "first", "Tile": "count"}) # keep the metadata and count the number of objects (mitochondria) for each tile
+meta_cols = mito_data.groupby("Tile").agg({"Animal": "first", "Genotype": "first", "Layer": "first", "Stub": "first", "Section_ID": "first", "Tile": "count"}) # keep the metadata and count the number of objects (mitochondria) for each tile
 mito_avgs = meta_cols.join(mito_avgs) # join the averaged data with the metadata columns + count
 
 # Rename the tile column to "count" 
@@ -238,35 +238,35 @@ print("\nNormalizing the data to the control average (cre -)...")
 # Note that as the code is written, the normalization includes layer SO
 
 # Empty dataframe for the normalized data
-norm_to_ctrl = pd.DataFrame(columns = ["Object ID", "Animal", "Stub", "Tile", "Layer", "Genotype", "Norm Area", "Norm Diam", "Norm Aspect", "Norm Dist"])
+norm_to_ctrl = pd.DataFrame(columns = ["Object ID", "Animal", "Stub", "Tile", "Layer", "Genotype", "Norm_Area", "Norm_Diam", "Norm_Aspect", "Norm_Dist"])
 
 # First we need to get the WT mean of all the data for each metric. This is what we will used as the normalization factor. 
 
 # Get the CTL data only
 WT_data = mito_data[mito_data["Genotype"] == "MCC Cre -"]
 # Get the means
-WT_avg = WT_data[["Area_um_sq", "Feret diam um", "Aspect Ratio", "NN_Dist_um"]].mean()
+WT_avg = WT_data[["Area_um_sq", "Feret_diam_um", "Aspect_Ratio", "NN_Dist_um"]].mean()
 
 # Normalize individual mito area by the average of the WT control
-mito_data["Norm Area"] = round(mito_data["Area_um_sq"] / WT_avg["Area_um_sq"], 2)
+mito_data["Norm_Area"] = round(mito_data["Area_um_sq"] / WT_avg["Area_um_sq"], 2)
 # Normalize mito diameter by the WT control
-mito_data["Norm Diam"] = round(mito_data["Feret diam um"] / WT_avg["Feret diam um"], 2)
+mito_data["Norm_Diam"] = round(mito_data["Feret_diam_um"] / WT_avg["Feret_diam_um"], 2)
 # Normalize the mito aspect ratio by the WT control
-mito_data["Norm Aspect"] = round(mito_data["Aspect Ratio"] / WT_avg["Aspect Ratio"], 2)
+mito_data["Norm_Aspect"] = round(mito_data["Aspect_Ratio"] / WT_avg["Aspect_Ratio"], 2)
 # Normalize the NN distance by the WT control
-mito_data["Norm Dist"] = round(mito_data["NN_Dist_um"] / WT_avg["NN_Dist_um"], 2)
+mito_data["Norm_Dist"] = round(mito_data["NN_Dist_um"] / WT_avg["NN_Dist_um"], 2)
 
 print(" done.")
     
 # Subset the mito_avg dataframe to get just the columns of interest
 # Later in the code, we will add the normalized count and total mito area to this dataframe and save it as a CSV file
-mito_avgs_sub = mito_avgs[['Animal', 'Genotype', 'Layer', 'Stub', 'Section ID', 'Area_um_sq', 'Major Length um', 'Minor Length um', 'Feret diam um', 'Aspect Ratio', 'Perimeter um', 'Count', 'Total_mito_Area_um_sq']]
+mito_avgs_sub = mito_avgs[['Animal', 'Genotype', 'Layer', 'Stub', 'Section_ID', 'Area_um_sq', 'Major_Length_um', 'Minor_Length_um', 'Feret_diam_um', 'Aspect_Ratio', 'Perimeter_um', 'Count', 'Total_mito_Area_um_sq']]
 # Save as CSV file
 mito_avgs_sub.to_csv(os.path.join(dirName, str("SEM_mito_tile_avgs.csv")), index=True)
 
 # Also save the individual mito data
 # This includes some columns we don't really use, but may want to look at later.
-mito_data_sub = mito_data[['Object ID', 'Tile', 'Animal', 'Genotype', 'Layer', 'Stub', 'Area', 'Area_um_sq', 'Length of Major Axis', 'Length of Minor Axis', 'Major Length um', 'Minor Length um', 'Feret diam um', 'Aspect Ratio', 'Perimeter um', 'Dendrite Object parent ID', 'NN_Dist_um', 'NN_ID', 'Eccentricity', 'Average Intensity (channel 1)', 'Norm Area', 'Norm Diam', 'Norm Aspect', 'Norm Dist']]
+mito_data_sub = mito_data[['Object ID', 'Tile', 'Animal', 'Genotype', 'Layer', 'Stub', 'Area', 'Area_um_sq', 'Length of Major Axis', 'Length of Minor Axis', 'Major_Length_um', 'Minor_Length_um', 'Feret_diam_um', 'Aspect_Ratio', 'Perimeter_um', 'Dendrite Object parent ID', 'NN_Dist_um', 'NN_ID', 'Eccentricity', 'Average Intensity (channel 1)', 'Norm_Area', 'Norm_Diam', 'Norm_Aspect', 'Norm_Dist']]
 # Save as CSV file
 mito_data_sub.to_csv(os.path.join(dirName, str("SEM_indiv_mito_data.csv")), index=False)
 
@@ -286,10 +286,10 @@ animal_avgs["Total_Count"] = mito_avgs[["Genotype", "Animal", "Layer", "Count"]]
 # We need the total area analyzed, which we will use to normalize total mito area
 
 # Number of tiles per animal for each layer
-animal_avgs["Tiles per Animal"] = mito_avgs.groupby(["Genotype", "Animal", "Layer"], observed = True).agg({"Animal": "count"}).rename(columns={"Animal":"Tiles per Animal"})
+animal_avgs["Tiles_per_Animal"] = mito_avgs.groupby(["Genotype", "Animal", "Layer"], observed = True).agg({"Animal": "count"}).rename(columns={"Animal":"Tiles_per_Animal"})
 
 # Calculate the total area analyzed for each stub (100 um2 per tile)
-animal_avgs["Total_Area_um_sq"] = animal_avgs["Tiles per Animal"] * 100
+animal_avgs["Total_Area_um_sq"] = animal_avgs["Tiles_per_Animal"] * 100
 
 # Get the total mito area by layer
 animal_avgs["Total_mito_mass"] = mito_data[["Genotype", "Animal", "Layer", "Area_um_sq"]].groupby(["Genotype", "Animal", "Layer"], observed=True).sum()
@@ -301,24 +301,24 @@ animal_avgs["Total_mito_mass_per_area"] = animal_avgs["Total_mito_mass"] / anima
 animal_avgs = animal_avgs.reset_index().sort_values(['Genotype', 'Animal', 'Layer'], ascending = [False, True, True]).reset_index(drop=True)
 
 # Subset the animal df to just save the columns of interst
-animal_avgs_sub = animal_avgs[["Genotype", "Animal", "Layer", "Area_um_sq", "Major Length um", "Minor Length um", "Feret diam um", "Aspect Ratio", "Perimeter um", "NN_Dist_um", "Norm Area", "Norm Diam", "Norm Aspect", "Norm Dist", "Count_100um2", "Total_Count", "Tiles per Animal", "Total_Area_um_sq", "Total_mito_mass", "Total_mito_mass_per_area"]]
+animal_avgs_sub = animal_avgs[["Genotype", "Animal", "Layer", "Area_um_sq", "Major_Length_um", "Minor_Length_um", "Feret_diam_um", "Aspect_Ratio", "Perimeter_um", "NN_Dist_um", "Norm_Area", "Norm_Diam", "Norm_Aspect", "Norm_Dist", "Count_100um2", "Total_Count", "Tiles_per_Animal", "Total_Area_um_sq", "Total_mito_mass", "Total_mito_mass_per_area"]]
 
 # Save the animal averages to a CSV file
 animal_avgs_sub.to_csv(os.path.join(dirName, str("SEM_mito_animal_avgs.csv")), index=False)
 
 # Now let's get the averages by stub 
 # Note that although we looked at the data by stub, this isn't included in the analyses in the paper.
-section_avgs = round(mito_data[["Genotype", "Animal", "Section ID", "Layer", "Area_um_sq", "Major Length um", "Minor Length um", "Feret diam um", "Aspect Ratio", "Perimeter um", "Eccentricity", "NN_Dist_um", "Norm Area", "Norm Diam", "Norm Aspect", "Norm Dist"]].groupby(["Genotype", "Animal", "Section ID", "Layer"]).median(),3).dropna(how="all")
+section_avgs = round(mito_data[["Genotype", "Animal", "Section_ID", "Layer", "Area_um_sq", "Major_Length_um", "Minor_Length_um", "Feret_diam_um", "Aspect_Ratio", "Perimeter_um", "Eccentricity", "NN_Dist_um", "Norm_Area", "Norm_Diam", "Norm_Aspect", "Norm_Dist"]].groupby(["Genotype", "Animal", "Section_ID", "Layer"]).median(),3).dropna(how="all")
 
 # Add count from the tile average dataframe "mito_avgs"
-section_avgs["Total_Count"] = mito_avgs[["Genotype", "Animal", "Section ID", "Layer", "Count"]].groupby(["Genotype", "Animal", "Section ID", "Layer"]).sum().dropna(how="all")
+section_avgs["Total_Count"] = mito_avgs[["Genotype", "Animal", "Section_ID", "Layer", "Count"]].groupby(["Genotype", "Animal", "Section_ID", "Layer"]).sum().dropna(how="all")
 
-section_avgs["Total_mito_mass"] = mito_data[["Genotype", "Animal", "Section ID", "Layer", "Area_um_sq"]].groupby(["Genotype", "Animal", "Section ID", "Layer"]).sum().dropna(how="all")
+section_avgs["Total_mito_mass"] = mito_data[["Genotype", "Animal", "Section_ID", "Layer", "Area_um_sq"]].groupby(["Genotype", "Animal", "Section_ID", "Layer"]).sum().dropna(how="all")
 
-section_avgs["Tiles per Stub"] = mito_avgs.groupby(["Genotype", "Animal", "Section ID", "Layer"]).agg({"Section ID": "count"})
+section_avgs["Tiles_per_Stub"] = mito_avgs.groupby(["Genotype", "Animal", "Section_ID", "Layer"]).agg({"Section_ID": "count"})
 
 # Calculate the total area analyzed for each stub
-section_avgs["Total_Area_um_sq"] = section_avgs["Tiles per Stub"] * 100
+section_avgs["Total_Area_um_sq"] = section_avgs["Tiles_per_Stub"] * 100
 
 # Use the total area to normalize both count and total mito mass
 section_avgs["Total_Count_per_area"] = section_avgs["Total_Count"] / section_avgs["Total_Area_um_sq"]
@@ -340,10 +340,10 @@ if num_groups >1:
     genotype_avg = round(mito_data.groupby(["Genotype", "Layer"]).median(numeric_only=True),2)
     
     #Subset to get only the metrics of interest
-    genotype_sub = genotype_avg.loc[:, ("Area_um_sq", "Aspect Ratio", "Perimeter um", "Feret diam um", "NN_Dist_um")]
+    genotype_sub = genotype_avg.loc[:, ("Area_um_sq", "Aspect_Ratio", "Perimeter_um", "Feret_diam_um", "NN_Dist_um")]
     
     # Get count from the mito_avgs dataframe
-    genotype_sub["Count 100um2"] = round(mito_avgs[["Genotype", "Layer", "Count"]].groupby(["Genotype", "Layer"]).median(),1)
+    genotype_sub["Count_100um2"] = round(mito_avgs[["Genotype", "Layer", "Count"]].groupby(["Genotype", "Layer"]).median(),1)
     genotype_sub["N_mitos"] = round(mito_data[["Genotype", "Layer","Object ID"]].groupby(["Genotype", "Layer"]).count(),1)
     
     # print to the console
@@ -364,7 +364,7 @@ KO_data = mito_data[mito_data["Genotype"] == "MCC Cre +"]
 from mito_functions import get_stats_summary
 
 # plot the CTL histogram by layer
-(stats_CTL, norm_CTL) = get_stats_summary(data = WT_data, data_col = "Area_um_sq", x_label = "Area (um2)", save_dir = dirName, group_name = "CTL", binsize = 0.01, hist_comp = "proportion", figsize = (8,5), xlim = [0,0.4], ylim = [0,0.1])
+stats_CTL, norm_CTL = get_stats_summary(data = WT_data, data_col = "Area_um_sq", x_label = "Area (um2)", save_dir = dirName, group_name = "CTL", binsize = 0.01, hist_comp = "proportion", figsize = (8,5), xlim = [0,0.4], ylim = [0,0.1])
 
 # similar histogram for the cKO
 stats_KO, norm_KO = get_stats_summary(data = KO_data, data_col = "Area_um_sq", x_label = "Area (um2)", save_dir = dirName, group_name = "cKO", binsize = 0.01, hist_comp = "proportion", figsize = (8,5), xlim = [0,0.4], ylim = [0,0.1])
@@ -395,10 +395,10 @@ print("\nAnalyzing denditic mitochondria in the CTL (not normalized):")
 WT_KO_violin(data = WT_data, data_col = "Area_um_sq", group=0, title ="CTL CA2", save_path = fig_path, units = "Mito Area (\u00B5m\u00B2)", y_range = [0,0.5], colors = WT_colors)
 
 # violin plot for mito Feret's diameter in CTL:
-WT_KO_violin(data = WT_data, data_col = "Feret diam um", group=0, title ="CTL CA2", save_path = fig_path, units = "Feret's Diameter (\u00B5m)", y_range = [0,1.5], colors = WT_colors)
+WT_KO_violin(data = WT_data, data_col = "Feret_diam_um", group=0, title ="CTL CA2", save_path = fig_path, units = "Feret's Diameter (\u00B5m)", y_range = [0,1.5], colors = WT_colors)
 
 # violin plot for mito aspect ratio in CTL:
-WT_KO_violin(data = WT_data, data_col = "Aspect Ratio", group=0, title ="CTL CA2", save_path = fig_path, units = "Aspect Ratio", y_range = [0,4.5], colors = WT_colors)
+WT_KO_violin(data = WT_data, data_col = "Aspect_Ratio", group=0, title ="CTL CA2", save_path = fig_path, units = "Aspect Ratio", y_range = [0,4.5], colors = WT_colors)
 
 # violin plot for nearest neighbor distance in CTL:
 WT_KO_violin(data = mito_data, data_col = "NN_Dist_um", group=0, title ="CTL CA2", save_path = fig_path, units = "NN Distance (\u00B5m)", y_range = [0,4], colors = WT_colors)
@@ -412,16 +412,16 @@ print("\nAnalyzing denditic mitochondria in the CTL and MCU KO (normalized to CT
 violin_colors = [item for pair in zip(WT_colors, KO_colors + [0]) for item in pair]
 
 # violin plot for individual mito area in cKO and CTL normalized to CTL
-WT_KO_violin(data = mito_data, data_col = "Norm Area", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Mito Area \nNorm. to CTL mean", y_range = [0,2], colors = violin_colors, stats=1)
+WT_KO_violin(data = mito_data, data_col = "Norm_Area", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Mito Area \nNorm. to CTL mean", y_range = [0,2], colors = violin_colors, stats=1)
 
 # violin plot for mito Feret's diameter normalized to CTL:
-WT_KO_violin(data = mito_data, data_col = "Norm Diam", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Feret's Diameter \nNorm. to CTL mean", y_range = [0,1.8], colors = violin_colors, stats=1)
+WT_KO_violin(data = mito_data, data_col = "Norm_Diam", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Feret's Diameter \nNorm. to CTL mean", y_range = [0,1.8], colors = violin_colors, stats=1)
 
 # violin plot for mito aspect ratio normalized to CTL:
-WT_KO_violin(data = mito_data, data_col = "Norm Aspect", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Aspect Ratio \nNorm. to CTL mean", y_range = [0,2], colors = violin_colors, stats=1)
+WT_KO_violin(data = mito_data, data_col = "Norm_Aspect", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Aspect Ratio \nNorm. to CTL mean", y_range = [0,2], colors = violin_colors, stats=1)
 
 # violin plot for nearest neighbor distance normalized to CTL:
-WT_KO_violin(data = mito_data, data_col = "Norm Dist", title = "CA2 CTL vs cKO", save_path = fig_path, units = "NN Distance \nNorm. to CTL mean", y_range = [0,3], colors = violin_colors, stats=1)
+WT_KO_violin(data = mito_data, data_col = "Norm_Dist", title = "CA2 CTL vs cKO", save_path = fig_path, units = "NN Distance \nNorm. to CTL mean", y_range = [0,3], colors = violin_colors, stats=1)
 
 
 #%%% Now lets make a few more plots to look at mitochondrial content across layers in the cKO and CTL. We will plot mitochondrial count and mitochondrial total area.
@@ -480,11 +480,11 @@ fig, axes = plt.subplots(figsize=(5,4))
 sns.despine(fig=fig, top=True, right=True)
 
 # Plot SLM data
-sns.scatterplot(x= "Aspect Ratio", y= "Area_um_sq", data=SLM_data, ax=axes, color= WT_colors[2], alpha= 0.9, s=20, label="SLM")
+sns.scatterplot(x= "Aspect_Ratio", y= "Area_um_sq", data=SLM_data, ax=axes, color= WT_colors[2], alpha= 0.9, s=20, label="SLM")
 # Plot SR data
-sns.scatterplot(x= "Aspect Ratio", y= "Area_um_sq", data=SR_data, ax=axes, color= WT_colors[1], alpha= 0.9, s=20, label="SR")
+sns.scatterplot(x= "Aspect_Ratio", y= "Area_um_sq", data=SR_data, ax=axes, color= WT_colors[1], alpha= 0.9, s=20, label="SR")
 # Plot SO data
-sns.scatterplot(x= "Aspect Ratio", y= "Area_um_sq", data=SO_data, ax=axes, color= WT_colors[0], alpha= 0.9, s=20, label="SO")
+sns.scatterplot(x= "Aspect_Ratio", y= "Area_um_sq", data=SO_data, ax=axes, color= WT_colors[0], alpha= 0.9, s=20, label="SO")
 
 plt.legend(fontsize='12', title_fontsize='14', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0, frameon=False)
 
@@ -523,7 +523,7 @@ norm_to_ctl_grouped = round(norm_to_ctl_tile.groupby(["Genotype", "Layer"], obse
 
 # Create a dataframe for the normalized data
 # grab the normalized data for the other metrics from the genotype_avg dataframe
-norm_indiv_data = genotype_avg.loc[:, ("Norm Area", "Norm Aspect", "Norm Diam", "Norm Dist")]
+norm_indiv_data = genotype_avg.loc[:, ("Norm_Area", "Norm_Aspect", "Norm_Diam", "Norm_Dist")]
 
 # combine the normalized data into a dataframe
 norm_to_ctl_grouped = pd.concat([norm_indiv_data, norm_to_ctl_grouped], axis=1)
@@ -704,16 +704,16 @@ mito_count_animal = prism_format(data = mito_avgs, data_col = "Total_mito_Area_u
 mito_indiv_area = prism_format(data = mito_data, data_col = "Area_um_sq", col=["Genotype", "Layer"], file_path = os.path.join(prism_path, str("Indiv_Mito_area_um2.csv")))
 
 # save a Prism table for perimeter
-mito_indiv_peri = prism_format(data = mito_data, data_col = "Perimeter um", col=["Genotype", "Layer"], file_path = os.path.join(prism_path, str("Indiv_Mito_perimeter_px.csv")))
+mito_indiv_peri = prism_format(data = mito_data, data_col = "Perimeter_um", col=["Genotype", "Layer"], file_path = os.path.join(prism_path, str("Indiv_Mito_perimeter_px.csv")))
 
 # save a Prism table for Aspect Ratio
-mito_indiv_aspect = prism_format(data = mito_data, data_col = "Aspect Ratio", col=["Genotype", "Layer"], file_path = os.path.join(prism_path, str("Indiv_Mito_aspect_um.csv")))
+mito_indiv_aspect = prism_format(data = mito_data, data_col = "Aspect_Ratio", col=["Genotype", "Layer"], file_path = os.path.join(prism_path, str("Indiv_Mito_aspect_um.csv")))
 
 # save a Prism table for distance to nearest neighbor
 mito_indiv_dist = prism_format(data = mito_data, data_col = "NN_Dist_um", col=["Genotype", "Layer"], file_path = os.path.join(prism_path, str("Indiv_Mito_dist_NN.csv")))
 
 # save a Prism table for Feret's diameter
-mito_indiv_Feret = prism_format(data = mito_data, data_col = "Feret diam um", col=["Genotype", "Layer"], file_path = os.path.join(prism_path, str("Indiv_Mito_Feret_diam.csv")))
+mito_indiv_Feret = prism_format(data = mito_data, data_col = "Feret_diam_um", col=["Genotype", "Layer"], file_path = os.path.join(prism_path, str("Indiv_Mito_Feret_diam.csv")))
 
 # Spit the individual mito data by animal to look at each animal's distribution. With this we can check for animal to animal variability and any outliers. Right now we'll just look at area.
 # This will save a separate file for each animal in the dataset
@@ -724,11 +724,11 @@ mito_indiv_Feret = prism_format(data = mito_data, data_col = "Feret diam um", co
 
 mito_area_animal_trans = prism_format(data = animal_avgs, data_col = "Area_um_sq", col=["Genotype","Animal"], row="Layer", sort="Genotype", file_path = os.path.join(prism_path, str("Trans_Med_Mito_Area_um2.csv")))
 
-mito_diam_animal_trans = prism_format(data = animal_avgs, data_col = "Feret diam um", col=["Genotype","Animal"], row="Layer", sort="Genotype", file_path = os.path.join(prism_path, str("Trans_Med_Mito_major_Ferets_diam.csv")))
+mito_diam_animal_trans = prism_format(data = animal_avgs, data_col = "Feret_diam_um", col=["Genotype","Animal"], row="Layer", sort="Genotype", file_path = os.path.join(prism_path, str("Trans_Med_Mito_major_Ferets_diam.csv")))
 
-mito_peri_animal_trans = prism_format(data = animal_avgs, data_col = "Perimeter um", col=["Genotype","Animal"], row="Layer", sort="Genotype", file_path = os.path.join(prism_path, str("Trans_Med_Mito_perimeter.csv")))
+mito_peri_animal_trans = prism_format(data = animal_avgs, data_col = "Perimeter_um", col=["Genotype","Animal"], row="Layer", sort="Genotype", file_path = os.path.join(prism_path, str("Trans_Med_Mito_perimeter.csv")))
 
-mito_aspect_animal_trans = prism_format(data = animal_avgs, data_col = "Aspect Ratio", col=["Genotype","Animal"], row="Layer", sort="Genotype", file_path = os.path.join(prism_path, str("Trans_Med_Mito_aspect.csv")))
+mito_aspect_animal_trans = prism_format(data = animal_avgs, data_col = "Aspect_Ratio", col=["Genotype","Animal"], row="Layer", sort="Genotype", file_path = os.path.join(prism_path, str("Trans_Med_Mito_aspect.csv")))
 
 mito_count_animal_trans = prism_format(data = animal_avgs, data_col = "Count_100um2", col=["Genotype","Animal"], row="Layer", sort="Genotype", file_path = os.path.join(prism_path, str("Trans_Med_Mito_count_100um2.csv")))
 
