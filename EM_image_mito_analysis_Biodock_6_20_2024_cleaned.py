@@ -25,10 +25,11 @@ import easygui
 import os
 from datetime import date
 import numpy as np
-from mito_functions import WT_KO_violin # custom function
+from mito_functions import WT_KO_violin, get_stats_summary, prism_format # custom function
 import seaborn as sns
 import matplotlib.pyplot as plt
 import inspect
+from scipy.spatial import KDTree
 
 # Expand the printed text of pd dataframes
 pd.set_option('display.max_column', None)
@@ -49,6 +50,23 @@ try:
     print("\nDirectory" , dirName ,  "Created.\n") 
 except FileExistsError:
     print("\nDirectory" , dirName ,  "already exists, no need to create a new directory.")
+    
+# Make sure the meta data about the analysis is correct below
+    
+#!!! Enter the name an version of the Biodock AI used to segment the images here. This is important information to have if we end up training multiple AI versions.
+AI_name = "Mitochondria in MCU KO and WT mice (V6)"
+
+#!!! Dataset that the images are from:
+dataset = "CTL and KO CA2"
+
+# Set the tile size for the metadata
+tile_size = "6144 x 4969 pixels"
+
+# Tile sampling
+sampling = "Every 8th tile"
+
+#!!! Space to put notes about the dataset or any changes made since a previous run.
+notes = "Analysis of CTL and MCU KO data in CA2 using version 6 of the Biodock AI. Denderitic mitochondria and dendrites were segmented with a confidence threshold of 0.4. This dataset was used for Figure 4 and supplemental figures 2-4."
     
 # Parse out the image metadata from the CSV file by breaking the "image origin" column into its separate folders
 
@@ -141,8 +159,6 @@ mito_data["Section_ID"] = mito_data["Animal"] + "_" + mito_data["Stub"]
 #%% Now let's do a nearest neighbor analysis to get the distance from each mitochondria to the closest mitochondria within the same image tile.
 
 print("\nCalculating the nearest neighbors...")
-
-from scipy.spatial import KDTree
 
 # Find the nearest neighbor for each mitochondria with a KDtree
 # Note this will have to be done within the same tile image
@@ -361,7 +377,6 @@ WT_data = mito_data[mito_data["Genotype"] == "MCC Cre -"]
 KO_data = mito_data[mito_data["Genotype"] == "MCC Cre +"]
 
 # plot histograms with the get_stats_summary() custom function
-from mito_functions import get_stats_summary
 
 # plot the CTL histogram by layer
 stats_CTL, norm_CTL = get_stats_summary(data = WT_data, data_col = "Area_um_sq", x_label = "Area (um2)", save_dir = dirName, group_name = "CTL", binsize = 0.01, hist_comp = "proportion", figsize = (8,5), xlim = [0,0.4], ylim = [0,0.1])
@@ -598,24 +613,12 @@ plt.savefig(os.path.join(fig_path, "Mito_count_total_area_CTL_KO_corr_by_layer.p
 
 #%% Get some basic metadata information about this code and the analysis to save as a txt file with the data.
 
-# get the tile size for the metadata
-tile_size = "6144 x 4969 pixels"
-
-# tile sampling
-sampling = "Every 8th tile"
-
 # Total number of tiles analyzed in each region
 basal_count = list(mito_avgs["Layer"]).count("Basal")
 prox_count = list(mito_avgs["Layer"]).count("Proximal")
 dist_count = list(mito_avgs["Layer"]).count("Distal")
 
 total_analyzed = str(basal_count) + " Basal; " + str(prox_count) + " Proximal; " + str(dist_count) + " Distal (Total = " + str(len(mito_avgs)) + ")"
-
-#!!! Enter the name an version of the Biodock AI used to segment the images here. This is important information to have if we end up training multiple AIs. It will have to be set manually as it isn't saved in the .CSV output file.
-AI_name = "Mitochondria in MCU KO and WT mice (V6)"
-
-#!!! Set the dataset that the images are from below:
-dataset = "CTL and KO CA2"
 
 # For reference, we'll add the name of the code used to analyse the data (this code)
 # Note: Keep this updated if you update the name or date on the code
@@ -660,9 +663,6 @@ excluded = str(num_flag) + " tiles\n" + ", ".join(flagged.index)
 if num_flag >= 1: # If any tiles were excluded due to low counts
     meta_summary["Excluded"] = excluded # add excluded column to the metadata
 
-#!!! Space to put notes about the dataset or any changes made since a previous run.
-notes = "Analysis of CTL and MCU KO data in CA2 using version 6 of the Biodock AI. Denderitic mitochondria and dendrites were segmented with a confidence threshold of 0.4. This dataset was used for Figure 4 and supplemental figures 2-4."
-
 if len(notes) > 1: # if there are notes
     meta_summary["Notes"] = notes # add notes column to the metadata
 
@@ -685,8 +685,6 @@ except FileExistsError:
     pass # skip if the folder already exists
 
 # We need to format the data for each metric of interest into a table for easy import into Prism and plotting. For this, we want a column for each layer, with each row a tile average. There can be a different numbers of tiles for each column, but in general they will be the same length as we should have an equal number of tiles for each dendritic layer.
-
-from mito_functions import prism_format
 
 # Now we can use the function to save the Prism tables for each metric of interest!
 
