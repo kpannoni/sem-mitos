@@ -161,7 +161,6 @@ def data_quartiles(data, data_col, save_path, group_col="Layer", output_cols = 0
         rank_df = rank_df.rename_axis("Rank").reset_index()
         rank_df["Rank"] = rank_df["Rank"] + 1 # Add 1 so the rank starts at 1 and not zero
         
-        # !!! This may not be necessary if I change the type before hand to obj instead of float
         try: # Change the data type of the Object ID column to "int" so there's no decimals
             rank_df["Object ID"] = rank_df["Object ID"].astype(int)
         except KeyError:
@@ -490,7 +489,7 @@ def WT_KO_violin(data, data_col, save_path, plot_type = "violin", group = "Genot
                 xmin,xmax = plt.xlim()
                 # line=Line2D([x1, x1, x2, x2], [y, y+h, y+h, y], lw=1.5, c='k')
                 # ax.add_line(line)
-                #!!! get number of stars based on significance
+                # Get number of stars based on significance
                 layer_p = posthoc_sig[posthoc_sig["Group A"].str.contains(layer)]["P-val"].reset_index(drop=True)[0]
                 
                 if layer_p < 0.0001:
@@ -531,7 +530,7 @@ def WT_KO_violin(data, data_col, save_path, plot_type = "violin", group = "Genot
                     line=Line2D([x1, x1, x2, x2], [y, y+h, y+h, y], lw=1.5, c='k')
                     ax.add_line(line)
                     
-                    #!!! determine the level of significance to print on the plot
+                    # Determine the level of significance to print on the plot
                     layer_p = posthoc_sig[posthoc_sig["Group A"].str.contains(layer)]["P-val"].reset_index(drop=True)[0]
                     
                     if layer_p < 0.0001:
@@ -586,275 +585,7 @@ def WT_KO_violin(data, data_col, save_path, plot_type = "violin", group = "Genot
         plt.savefig(os.path.join(save_path, str(data_col + "_by_layer_violin.png")), format='png', dpi=300, bbox_inches='tight')
     else: # if a group was used, include it in the filename
         plt.savefig(os.path.join(save_path, str(data_col + "_by_" + str(group) + "_violin.png")), format='png', dpi=300, bbox_inches='tight')
-        
-#%%% Same plot as above but adjusted to plot a barplot with the animal averages. This will mostly be used for count and mito mass and other metrics that cannot be looked at individually.
-        
-def WT_KO_bar(data, data_col, save_path, group = "Genotype", y_range = [0, 0.5], units = 'Area (\u00B5m\u00B2)', title = 0, colors = ["#7F7F7F", "#FFFFFF"], stats=0, SO=True):
     
-    ''' Similar to the function above, this function will plot given data as a bar plot, comparing the groups you provide under "group" by layer. By default, the groups are Genotype, which would be the KO compared to control. If there is no grouping and you just want to plot the 3 layers, set "group" to be 0 when you call the function.
-    
-    Required inputs are the dataframe with the data, the name of the data column, and the path to save the bar plot. Note that your dataframe should contain a column called "Layer", as that is what is going to be plotted on the X with your data column on the Y.
-    
-    By default, the function will just plot and not do the two way ANOVA. Change Stats = 1 if you would like to do statistics. You can put SO = False to exclude SO from the plot. SO will still be included in the statistics.
-    
-    Optionally, you can change the group column you are comparing across, the range of the Y axis, the units of the Y-axis and the title of the plot. The default units are area in microns and the default range is from 0 to 0.5 microns. If you provide colors, make sure the number of colors matches the number of groups. If no grouping, the colors will be the three layers (so make sure there are three colors). I may add more customization later on.
-    
-    '''
-    
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-    from matplotlib.lines import Line2D
-    import pingouin as pg
-    import pandas as pd
-    import os
-    
-    # Now lets make a violin plot comparing WT and KO mitochondria in each layer
-    # This will be individual mito data
-    
-    # Make a palette out of the colors
-    my_pal = sns.color_palette(colors)
-    
-    # First thing, if we are not including SO, remove it from the data
-    # Note that for right now this is only going to be used for plotting. The stats will still include SO
-    if SO == False:
-        plot_data = data.where(data["Layer"] != "Basal").dropna(how="all")
-        plot_data["Layer"] = plot_data["Layer"].cat.remove_unused_categories()
-    else:
-        plot_data = data
-    
-    # First, if stat is set to 1 and the group is "Genotype", do the 2way ANOVA
-    if stats == 1 and group == "Genotype":
-        # two-way standard ANOVA (no pairing)
-        ANOVA = pg.anova(dv=data_col, between=["Layer","Genotype"], data=data)
-        filename1 = str(data_col + "_2way_ANOVA_animal.csv")
-        ANOVA.to_csv(os.path.join(save_path, filename1), index=False)
-        
-        # test if the data is normal
-        shap = pg.normality(data[data_col])
-        norm = shap["normal"][0] # boolean for normality, true if normal
-        
-        # run post hoc tests between layer and then genotype (order matters).
-        # The last 3 lines with layer * genotype are the comparisons we're interested in
-        posthoc = pg.pairwise_tests(data=data, dv=data_col, between=["Layer","Genotype"], parametric=norm, padjust="sidak")
-        # Save posthoc table as .CSV file
-        filename2 = str(data_col + "_genotype_posthoc_bar.csv")
-        posthoc.to_csv(os.path.join(save_path, filename2), index=False)
-        
-        # Also do a post hoc comparing the layers within each genotype
-        layer_posthoc = pg.pairwise_tests(data=data, dv=data_col, between=["Genotype", "Layer"], parametric=norm, padjust="sidak")
-        # Save posthoc table as .CSV file
-        filename3 = str(data_col + "_layer_posthoc_bar.csv")
-        layer_posthoc.to_csv(os.path.join(save_path, filename3), index=False)
-        
-    
-        # Pick out which statistics are significant so we can add the stats to the plot
-        # First check the overall ANOVA. If the overall ANOVA is significant, we can run the posthoc
-        overall_ANOVA_sig = pd.DataFrame(columns = ["Factor", "P-val", "Sig"]) # empty dataframe to add the overall significance
-        posthoc_sig = pd.DataFrame(columns = ["Layer", "Comparison", "P-val", "Sig", "Test"]) # empty dataframe to add the multiple comparison sig for genotype comparison across layers
-        
-        posthoc_layer_sig = pd.DataFrame(columns = ["Genotype", "Comparison", "P-val", "Sig", "Test"]) # empty dataframe to add the multiple comparison sig for genotype comparison across layers
-    
-        # determine whether overall anova is significant for each factor
-        for row in ANOVA.iterrows():
-            factor = row[1]["Source"] # the factor being compared
-            p_val = row[1]["p-unc"] # the overall ANOVA p-value
-            
-            if p_val <= 0.05: # only pull out the stats that are significant
-                overall_sig = True
-                overall_stats = pd.DataFrame({"Factor": [factor], "P-val": [p_val], "Sig": [overall_sig]}) # pull relevant stats from overall ANOVA
-                overall_ANOVA_sig = pd.concat(objs=[overall_ANOVA_sig, overall_stats], ignore_index=True) # add to the overall_ANOVA_sig dataframe
-        
-        # print out the overall ANOVA results
-        print("\n-------------------------------\n  " + data_col + " Two-way ANOVA\n-------------------------------\n")
-        
-        if overall_ANOVA_sig.empty:   # if there's no significant results     
-            print("Overall ANOVA was not significant for either factor.")
-        else:
-            print(overall_ANOVA_sig)
-        
-        # if genotype is significant, look at the post hoc comparing genotype across each layer
-        if "Genotype" in list(overall_ANOVA_sig["Factor"]):
-            for i in range(4,7): # loop through the main comparisons of Layer X Genotype from the post hoc
-                layer_comp = posthoc.loc[i]["Layer"] # Layer we are testing
-                comparison = posthoc.loc[i]["A"] + " VS " + posthoc.loc[i]["B"]
-                p_val_corr = posthoc.loc[i]["p-corr"] # corrected p-value for the comparison
-                if norm:
-                    test = "unpaired T-tests"
-                else:
-                    test = "Mann Whit"
-                
-                # determine if it's significant
-                if p_val_corr <= 0.05:
-                    sig_comp = True
-                    comp_stats = pd.DataFrame({"Layer": [layer_comp], "Comparison": comparison, "P-val": [p_val_corr], "Sig": [sig_comp], "Test": [test]}) # pull relevant stats from any significant posthoc comparisons
-                    posthoc_sig = pd.concat(objs=[posthoc_sig, comp_stats], ignore_index=True) # add to posthoc dataframe
-    
-            # print out the posthoc results comparing genotype
-            if posthoc_sig.empty:
-                print("\nNone of the post hoc comparisons between genotype were significant.\n")
-            else:
-                print("\nMultiple comparisons across genotype:\n")
-                print(posthoc_sig)
-                
-        # if layer is significant, look at the post hoc comparing layers within each genotype
-        if "Layer" in list(overall_ANOVA_sig["Factor"]):
-            for i in range(4,10): # loop through the main comparisons of Layer X Genotype from the post hoc
-                gen_comp = layer_posthoc.loc[i]["Genotype"] # Genotype we're looking at
-                comparison = layer_posthoc.loc[i]["A"] + " VS " + layer_posthoc.loc[i]["B"]
-                p_val_corr = layer_posthoc.loc[i]["p-corr"] # corrected p-value for the comparison
-                if norm:
-                    test = "unpaired T-tests"
-                else:
-                    test = "Mann Whit"
-                
-                # determine if it's significant
-                if p_val_corr <= 0.05:
-                    sig_comp = True
-                    comp_stats = pd.DataFrame({"Genotype": [gen_comp], "Comparison": comparison, "P-val": [p_val_corr], "Sig": [sig_comp], "Test": [test]}) # pull relevant stats from any significant posthoc comparisons
-                    posthoc_layer_sig = pd.concat(objs=[posthoc_layer_sig, comp_stats], ignore_index=True) # add to posthoc dataframe
-    
-            # print out the posthoc results comparing layer
-            # We'll print out the layer comparisons but don't need to put the significance on the plots
-            if posthoc_layer_sig.empty:
-                print("\nNone of the post hoc comparisons between layers were significant.\n")
-            else:
-                print("\nMultiple comparisons across layers:\n")
-                print(posthoc_layer_sig)
-                
-    # Make the bar plot!!
-    if SO:
-        fig_size = (5,4)
-    else:
-        fig_size = (4,4) # plot will be shorter because only 2 layers
-    fig, ax = plt.subplots(figsize=fig_size) # size of plot
-    fig.tight_layout()
-    # fig.subplots_adjust(hspace=1, wspace=0.7) # spacing between subplots
-    sns.despine(fig=fig, top=True, right=True) # remove spines for aethetics
-
-    if title == 0: # if no title provided
-        title = ""
-    else:
-        title = title + ": " + str(data_col)
-        
-    plt.suptitle(title, y = 1.15, fontsize=24, fontweight="bold") # overall plot title
-    # plt.ylabel(units, labelpad=10, fontsize=28, fontweight="bold")
-    if group == 0: # if no grouping provided
-        try: # catch incase columns are missing or named improperly
-            sns.barplot(y=data_col, x = "Layer", data=plot_data, palette = my_pal, edgecolor = 'k', linewidth = 3, ax = ax, width=0.6) # create a bar plot with just layer
-            sns.stripplot(y=data_col, x = "Layer", data=plot_data, palette = 'dark:k', ax = ax, size=10) # add the individual datapoints on top
-            
-        except ValueError:
-            print("Warning: The specified columns '" + str(data_col) + "' and/or 'Layer' are not in the dataframe provided. Please make sure the columns in your dataframe are present and named as shown.")
-            pass
-    else:
-        try: # catch
-            sns.barplot(y=data_col, x = "Layer", data=plot_data, hue = group, palette = my_pal, edgecolor = 'k', linewidth = 3, ax = ax, width=0.6) # create the bar plot of layer grouped by the specified group
-            sns.stripplot(y=data_col, x = "Layer", data=plot_data, hue = group, dodge = True, palette = 'dark:k', ax = ax, size=8) # add the individual datapoints on top
-        except ValueError:
-            print("Warning: The columns '" + str(data_col) + "', 'Layer' and '" + str(group) + "' must be in your dataframe. Please make sure your columns and inputs are named correctly. By default, the violin plot is grouped by Layer and by Genotype. To group by something other than genotype, please specify the column name under the 'group' variable. If you only want to group the plot by layer and not any additional grouping, please set 'group = 0' when you call the function.")
-            pass
-    
-    # Format the plot and axes
-    # plt.setp(ax.patches, width= 0.3) # change width of bars
-
-    # set the Y axis range based on the default or provided y_range
-    ax.set_ylim(y_range)
-    ax.tick_params(axis='y', labelsize=14) # set tick label size for Y-axis
-    ax.tick_params(axis='x', labelsize=16, )
-    ax.set_ylabel(units, labelpad=10, fontsize=18, fontweight="bold") # set the x axis label with the given units
-    ax.set_xlabel(None) # set the x axis label with the given units
-    
-    # if an ANOVA was run and any post hocs were significant, add sig bars to the plot  
-    if stats == 1 and not posthoc_sig.empty:
-        if SO:
-        # find which violins to draw significance between on X-axis (0-1 Basal, 2-3 Prox, 4-5 Distal)
-            for layer in posthoc_sig["Layer"]: # loop over each significant posthoc comparison
-                if layer == "Basal":
-                    x1 = -0.25
-                    x2 = 0.25
-                if layer == "Proximal":
-                    x1 = 0.75
-                    x2 = 1.25
-                if layer == "Distal":
-                    x1 = 1.75
-                    x2 = 2.25
-                    
-                try: # definte the placement of the bar at +2 above the data max with tails of length 2
-                    y, h = max(y_range) - .02, .02
-                    
-                    # plot the bar for the current statistical comparison
-                    ymin,ymax = plt.ylim()
-                    xmin,xmax = plt.xlim()
-                    # Create a new axis to plot the bars on
-                    # ax2 = plt.axes([xmin,ymin,xmax,ymax+0.04], facecolor=(1,1,1,0))
-                    line=Line2D([x1, x1, x2, x2], [y, y+h, y+h, y], lw=1.5, c='k')
-                    ax.add_line(line)
-                    
-                    # determine the level of significance to print on the plot
-                    layer_p = posthoc_sig[posthoc_sig["Layer"] == layer]["P-val"].reset_index(drop=True)[0]
-                    
-                    if layer_p < 0.0001:
-                        sig_text = "****"
-                    elif layer_p < 0.001:
-                        sig_text = "***"
-                    elif layer_p < 0.01:
-                        sig_text = "**"
-                    elif layer_p < 0.05:
-                        sig_text = "*"
-                        
-                    ax.text((x1+x2)/2, y+h, sig_text, ha='center', va='bottom', color="k", fontsize=18)
-                except UnboundLocalError:
-                    pass
-        elif SO == False:
-        # find which violins to draw significance between on X-axis (0-1 Basal, 2-3 Prox, 4-5 Distal)
-            for layer in posthoc_sig["Layer"]: # loop over each significant posthoc comparison
-                if layer == "Basal":
-                    pass
-                if layer == "Proximal":
-                    x1 = -0.25
-                    x2 = 0.25
-                if layer == "Distal":
-                    x1 = 0.75
-                    x2 = 1.25
-                    
-                try: # definte the placement of the bar at +2 above the data max with tails of length 2
-                    y, h = max(y_range) - .02, .02
-                    
-                    # plot the bar for the current statistical comparison
-                    ymin,ymax = plt.ylim()
-                    xmin,xmax = plt.xlim()
-                    # Create a new axis to plot the bars on
-                    # ax2 = plt.axes([xmin,ymin,xmax,ymax+0.04], facecolor=(1,1,1,0))
-                    line=Line2D([x1, x1, x2, x2], [y, y+h, y+h, y], lw=1.5, c='k')
-                    ax.add_line(line)
-                    
-                    # determine the level of significance to print on the plot
-                    layer_p = posthoc_sig[posthoc_sig["Layer"] == layer]["P-val"].reset_index(drop=True)[0]
-                    
-                    if layer_p < 0.0001:
-                        sig_text = "****"
-                    elif layer_p < 0.001:
-                        sig_text = "***"
-                    elif layer_p < 0.01:
-                        sig_text = "**"
-                    elif layer_p < 0.05:
-                        sig_text = "*"
-                        
-                    ax.text((x1+x2)/2, y+h, sig_text, ha='center', va='bottom', color="k", fontsize=18)
-                except UnboundLocalError:
-                    pass
-    
-    # Remove legend if there's no grouping. The X-axis will say the layers
-    if group == 0:
-        plt.legend(None)
-    else: # move and resize the legend
-        plt.legend(title=group, fontsize='12', title_fontsize='14', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0)
-
-    # Save the figure as a PNG file
-    if group == 0: # if no further grouping
-        plt.savefig(os.path.join(save_path, str(data_col + "_by_layer_barplot.png")), format='png', dpi=300, bbox_inches='tight')
-    else: # if a group was used, include it in the filename
-        plt.savefig(os.path.join(save_path, str(data_col + "_by_" + str(group) + "_barplot.png")), format='png', dpi=300, bbox_inches='tight')
         
         
 #%% Prism formatting function prism_format()
@@ -1011,7 +742,8 @@ def get_stats_summary(data, data_col, x_label, save_dir = os.getcwd(), hue_col =
         print(f"{test}, N = {len(data[data_col])}, Statitic = {round(norm_stat,1)}, Critical Value = {crit_value}")
                 
     # now let's create a summary stats table with the mean or median, std and N for each group in "hue" 
-    summary_tb = data[[hue_col,data_col]].groupby(hue_col).describe()
+    summary_tb = round(data[[hue_col,data_col]].groupby(hue_col).describe(),3)
+    summary_tb_full = summary_tb[data_col].T
     
     # subset just the most important stats to return
     if normal:
@@ -1025,9 +757,9 @@ def get_stats_summary(data, data_col, x_label, save_dir = os.getcwd(), hue_col =
 
     # save the full stats table as a CSV file
     if len(group_name) > 0:
-        summary_tb.reset_index().to_csv(os.path.join(save_dir, f"{group_name}_{data_col}_summary_stats.csv"), index=False)
+        summary_tb_full.reset_index().to_csv(os.path.join(save_dir, f"{group_name}_{data_col}_summary_stats.csv"), index=False)
     else:
-        summary_tb.reset_index().to_csv(os.path.join(save_dir, f"{data_col}_summary_stats.csv"), index=False)
+        summary_tb_full.reset_index().to_csv(os.path.join(save_dir, f"{data_col}_summary_stats.csv"), index=False)
         
     return summary_tb_sub.reset_index(), normal
     
