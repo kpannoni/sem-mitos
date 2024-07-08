@@ -22,6 +22,41 @@ Large 150 x 150 &micro;m ROIs from each layer were tiled into 100 &micro;m<sup>2
 
 View the exported data from Biodock [here](Biodock_AI_V6_output_den_mitos_dendrites_cKO_CTL_CA2.csv).
 
+## Set up:
+
+### Packages you will need:
+
+### Main analysis code: 
+[EM_image_mito_analysis_Biodock_6_20_2024_cleaned.py](EM_image_mito_analysis_Biodock_6_20_2024_cleaned.py)<br>
+**Input:** Object level data exported from Biodock (code will prompt user to select CSV file)
+#### Before you run:
+- Set the name of the save directory under `dirName`
+- Make sure the analysis meta data in the first code block is correct (AI version, dataset, tile size and sampling)
+- Add any relevant notes in the `notes` variable, which will be printed in `analysis_summary.txt` along with the other metadata<br>
+- Make sure the `mito_functions.py` code is in your working directory along with this analysis code.
+*Note: If you are running the same analysis, you shouldn't have to change the metadata.*
+
+---
+
+### Supplemental functions: 
+[mito_functions.py](mito_functions.py)<br>
+Custom functions that will be called by the main analysis code.
+#### Custom functions called:
+    WT_KO_violin()
+    ANOVA_posthoc()
+    get_stats_summary()
+    prism_format()
+
+---
+  
+### Bootstrap analysis code: 
+[mito_bootstrap_median_for_Biodock_7_1_2024_cleaned.py](mito_bootstrap_median_for_Biodock_7_1_2024_cleaned.py)<br>
+**Input:** The `SEM_indiv_mito_data.csv` and `SEM_mito_tile_avgs.csv` CSV files exported from the main analysis code.
+#### Before you run:
+- Set the location of the directory with the two input CSV files under the `loc` variable
+- Set the number of repetitions with `n_boot` (n_boot was 10000 for the analysis)
+- The number of tiles and mitochondria sampled can be changed in the `get_boot_sample()` function with tile_samp and mito_samp.
+
 ## Analysis Methods:
 
 1. Convert pixels to microns, remove any objects larger than 2 &micro;m<sup>2</sup> or smaller than 0.01 &micro;m<sup>2</sup> (likely not mitochondria)
