@@ -23,17 +23,14 @@ import time
 from datetime import date
 import inspect
 import os
-import sys
 
 # First, import the data and set up the bootstrap
 
-#!!! Get the location of the data. This is where we will create the folder for the bootstrap.
-# You will need to update this if the data you want to run the bootstrap on is somewhere else.
-# loc = "C:\\Users\\Pannoni\\Documents\\Lab Stuff\\EM_mito_bootstrap_V6_9_19"
-loc = "C:\\Users\\Pannoni\\Documents\\Lab Stuff\\Python_Scripts\\local_github_repo\\sem-mitos\\csv_output"
+#!!! Set the location of the data exported from the main analysis code below. This is where we will create the folder for the bootstrap.
+loc = "C:\\Users\\example_path\\SEM_mitos_CA2_Biodock_V6_6_20_24"
     
 #!!! set the number of bootstrap repetitions
-n_boot = 5
+n_boot = 10000
 
 # Import the mito dataframes for the EM data, which should be located in the folder that "loc" points to
 #!!! Note that if you ran the code "EM_image_mito_analysis_biodock_6_20_2024_cleaned", this is what the files should be named
@@ -746,11 +743,11 @@ get_boot_summary(boot_loc = save_loc, data_cols = ["Area", "Count"], groups = ["
     
 #%%% Now plot the probability distrubutions using the plot_prob_dist() function.
 
-# Here you can import the data if it's not already there, so the following sections can be run without running the entire bootstrap again
-#!!! You can manually set the path to your bootstrap directory below (change path name and uncomment the line below)
+# Here you can import the data if you've already run the bootstrap, so the following sections can be run without running the entire bootstrap again.
+#!!! Change the path name to the location of the bootstrap directory and uncomment the line below.
 # save_loc = 'C:\\Users\\example_path\\Bootstrap_median_EM_mitos_10000_tile_samp_50_mito_samp_100'
 
-# Note that the full code should run without this, since save_loc is output by the bootstrap function in the previous section
+# Note that you don't need to set save_loc above if you're running the full code, as save_loc is output by the get_boot_sample() function
 
 # First, plot the layer comparisons for mito area in the CTL
 
