@@ -6,14 +6,14 @@ Quantifying morphometrics of dendritic mitochondria from segmented SEM images.
 This repository is for analysis codes related to the preprint below:<br>
 [Read the Preprint](https://doi.org/10.1101/2023.11.10.566606)
 
-## Dataset:
+## Dataset
 
-This dataset was generated using a custom [Biodock AI model](https://biodock.ai) to selectively segment dendritic mitochondria in scanning electron microscopy (SEM) images.
+This dataset was generated using a custom [Biodock AI](https://biodock.ai) model to selectively segment dendritic mitochondria in scanning electron microscopy (SEM) images from mouse hippocampus.
 
-Dendritic mitochondria were segmented in Serial electron microscopy (SEM) images from basal, proximal and distal CA2 in 3 MCU cKO and 3 control mice.
+Dendritic mitochondria were segmented in scanning electron microscopy (SEM) images from basal, proximal and distal CA2 in 3 MCU cKO and 3 control mice.
 Large 150 x 150 &micro;m ROIs from each layer were tiled into 100 &micro;m<sup>2</sup> tiles, and every 8th tile was sampled for the analysis.
 
-#### Parameters exported from Biodock:
+#### Parameters of interest from Biodock:
 - Area (pixels)
 - Ferets Diameter (pixels)
 - Length of major axis (pixels)
@@ -22,26 +22,59 @@ Large 150 x 150 &micro;m ROIs from each layer were tiled into 100 &micro;m<sup>2
 
 View the exported data from Biodock [here](Biodock_AI_V6_output_den_mitos_dendrites_cKO_CTL_CA2.csv).
 
-## Set up:
+## Validation of AI performance with manual spot check
 
-### Packages you will need:
+A manual spot check of about 1% of the dataset was performed. 
+
+#### Three different types of errors were manually counted for each image in the spot check: 
+1) Number of missed dendritic mitochondria  *(false negatives)*
+2) Number of incorrectly segmented objects  *(false positives)*
+3) Border errors
+   
+The spot check found an accuracy of about 97% across both genotypes.
+
+|   AI Performance   | CTL             | cKO            |   
+| ------------------ |:---------------:|:--------------:|
+| total objects      | 1081            |      1337      |
+| % correct          | 97.1 %          |     97.5 %      |
+| missed objects / 100 um2   | 1.1             |      1.4       |
+
+## Setup to run the analysis
+
+*Ran using Spyder 5.4.3 with Python 3.11 packaged by Anaconda.*
+
+#### Required packages:
+
++ [easygui 0.98.3](https://pypi.org/project/easygui/)
++ [pingouin 0.5.3](https://pingouin-stats.org/build/html/index.html)
+
+#### Packages included with Anaconda:
+
+    pandas 1.5.3
+    matplotlib 3.7.1
+    seaborn 0.12.2
+    numpy 1.24.3
+    scipy 1.10.1
 
 ### Main analysis code: 
 [EM_image_mito_analysis_Biodock_6_20_2024_cleaned.py](EM_image_mito_analysis_Biodock_6_20_2024_cleaned.py)<br>
-**Input:** Object level data exported from Biodock (code will prompt user to select CSV file)
+**Input:**  Object level data exported from Biodock <br>
+*User will be prompted to select the CSV file.*
 #### Before you run:
 - Set the name of the save directory under `dirName`
-- Make sure the analysis meta data in the first code block is correct (AI version, dataset, tile size and sampling)
-- Add any relevant notes in the `notes` variable, which will be printed in `analysis_summary.txt` along with the other metadata<br>
-- Make sure the `mito_functions.py` code is in your working directory along with this analysis code.
-*Note: If you are running the same analysis, you shouldn't have to change the metadata.*
+- Make sure the meta data about the analysis in the first code block is correct (AI version, dataset, tile size and sampling)
+- Add any relevant notes in the `notes` variable, which will be printed in `analysis_summary.txt` along with the other meta data
+- Make sure the `mito_functions.py` code is in your working directory along with this analysis code
+
+*If you are running the same analysis, you shouldn't have to change the meta data.*
 
 ---
 
 ### Supplemental functions: 
 [mito_functions.py](mito_functions.py)<br>
-Custom functions that will be called by the main analysis code.
-#### Custom functions called:
+Custom functions that will be called by the main analysis code. <br>
+*You will need this code in your working directory for the analysis code to run properly.*
+#### Custom functions used:
     WT_KO_violin()
     ANOVA_posthoc()
     get_stats_summary()
@@ -51,15 +84,17 @@ Custom functions that will be called by the main analysis code.
   
 ### Bootstrap analysis code: 
 [mito_bootstrap_median_for_Biodock_7_1_2024_cleaned.py](mito_bootstrap_median_for_Biodock_7_1_2024_cleaned.py)<br>
-**Input:** The `SEM_indiv_mito_data.csv` and `SEM_mito_tile_avgs.csv` CSV files exported from the main analysis code.
+**Input:** CSV files `SEM_indiv_mito_data.csv` and `SEM_mito_tile_avgs.csv` exported from the main analysis code
 #### Before you run:
-- Set the location of the directory with the two input CSV files under the `loc` variable
-- Set the number of repetitions with `n_boot` (n_boot was 10000 for the analysis)
-- The number of tiles and mitochondria sampled can be changed in the `get_boot_sample()` function with tile_samp and mito_samp.
+- Run the `EM_image_mito_analysis_Biodock_6_20_2024_cleaned.py` code first to process and export the data
+- Set the location of the data directory with your two CSV files under the `loc` variable
+- Set the number of repetitions with `n_boot` (10000 for the analysis)
+- If desired, the number of image tiles and mitochondria to be sampled can be changed in the custom **get_boot_sample()** function by changing the `tile_samp` and `mito_samp` variables
 
-## Analysis Methods:
 
-1. Convert pixels to microns, remove any objects larger than 2 &micro;m<sup>2</sup> or smaller than 0.01 &micro;m<sup>2</sup> (likely not mitochondria)
+## Analysis Methods Overview
+
+1. Convert pixels to microns, remove any objects larger than 2 &micro;m<sup>2</sup> or smaller than 0.01 &micro;m<sup>2</sup>
 2. Calculate aspect ratio as the major axis / minor axis for each segmented mitochondria
 3. Use KDTree from Scipy to get distance to nearest neighbor between each segmented mitochondria to every other mitochondria in the same image tile
 4. Flag and remove any tiles with less than 2 mitochondria
@@ -67,70 +102,27 @@ Custom functions that will be called by the main analysis code.
 6. Calculate animal, section, tile and group averages and save the data as separate CSV files
 7. Create violin plots and run two-way ANOVAs with sidak post hoc on each metric of interest
 8. Create correlation plots of mitochondria count versus total mitochondria area per 100 &micro;m<sup>2</sup> for each layer and each genotype
+9. Compare mitochondrial size and count across layers and genotype with a hierarchical statistical bootstrap
 
-## Validation of AI performance with manual spot check
+## Results Summary
 
-A manual spot check of about 1% of the dataset found an accuracy of about 97% across both genotypes.
-
-|   AI Performance   | CTL             | cKO            |   
-| ------------------ |:---------------:|:--------------:|
-| total objects      | 1081            |      1337      |
-| % correct          | 97.1 %          |     97.5 %      |
-| missed objects / 100 um2   | 1.1             |      1.4       |
-
-
-## Results Summary:
+***See Figure 4 and Supplemental Figure 2 in our [preprint](https://doi.org/10.1101/2023.11.10.566606) for the main results of this analysis.***
 
 ### Wild-type mitochondria across CA2 layers
 
-- Mitochondria are bigger in area and Feret's diameter in the distal dendrites (SLM) than the proximal dendrites (SR) of CA2
-
-<!-- Violin plots of area and ferets in the CTL-->
-<img src="https://github.com/kpannoni/sem-mitos/plots_images/Area_um_sq_by_layer_violin.png" alt="violin plot of mitochondrial area in CTL CA2" width="40"/> 
-<img src="https://github.com/kpannoni/sem-mitos/plots_images/Feret_diam_um_by_layer_violin.png" alt="Violin plot of mitochondrial diameter in CTL CA2", width="40"/>
-  
-- Mitochondria in the distal dendrites are also more numerous and closer together than the proximal dendrites (SR)
-
-<!-- Plots of count per tile and distance to nearest neighbor-->
-<img src="https://github.com/kpannoni/sem-mitos/plots_images/Count_by_layer_violin.png" alt="box plot of mitochondrial area in CTL CA2" width="40"/> 
-<img src="https://github.com/kpannoni/sem-mitos/plots_images/NN_Dist_um_by_layer_violin.png" alt="violin plot of mitochondria nearest neighbor distance in CTL CA2" width="40"/> 
-
-- The basal dendrites (SO) have more rounded mitochondria than either proximal or distal dendrites.
-  
-<!-- violin plot of Aspect Ratio-->
-<img src="https://github.com/kpannoni/sem-mitos/plots_images/Aspect_Ratio_by_layer_violin.png" alt="violin plot of mitochondrial area in CTL CA2" width="40"/> 
-
----
+- There is considerable morphological heterogeneity across dendritic layers of CA2.
+- Mitochondria are larger, longer and more numerous in the distal dendrites (SLM) than the proximal dendrites (SR) of CA2.
 
 ### Comparing mitochondria in MCU cKO (cKO) to control (CTL)
 
-- Mitochondria are smaller across all dendritic layers of CA2 in the MCU cKO mice compared to CTL
+- Mitochondria are smaller and more numerous across all dendritic layers of CA2 in the MCU cKO mice compared to CTL, suggesting that MCU cKO leads to mitochondrial fragmentation.
 
-<!-- violin plot of area and feret's diameter in cKO + control-->
-<img src="https://github.com/kpannoni/sem-mitos/plots_images/Norm_Area_by_Genotype_violin.png" alt="violin plot of mitochondrial area in CTL vs cKO CA2" width="40"/>
-<img src="https://github.com/kpannoni/sem-mitos/plots_images/Norm_Diam_by_Genotype_violin.png" alt="violin plot of mitochondrial diameter in CTL vs cKO CA2" width="40"/>
-
-- MCU deletion did not alter the aspect ratio of mitochondria
-
-<!-- violin plot of aspect ratio in cKO + control-->
-<img src="https://github.com/kpannoni/sem-mitos/plots_images/Norm_Aspect_by_Genotype_violin.png" alt="violin plot of mitochondrial aspect ratio in CTL vs cKO CA2" width="40"/>
-
-- Mitochondria are closer together in the MCU cKO mice compared to CTL
-
-<!-- violin plot of NN distance in cKO + control-->
-<img src="https://github.com/kpannoni/sem-mitos/plots_images/Norm_Dist_by_Genotype_violin.png" alt="violin plot of nearest neighbor distance in CTL vs cKO CA2" width="40"/>
-  
-- Mitochondria count per 100 &micro;m<sup>2</sup> is increased in the cKO compared to CTL across all dendritic layers
-  
-<!-- Correlation plot comparing cKO and CTL across layers-->
-<img src="https://github.com/kpannoni/sem-mitos/plots_images/Mito_count_total_area_CTL_KO_corr_by_layer.png" alt="correlation plot of mitochondria count and total mitochondria area per 100um2 in each layer of CA2" width="40"/>
-
-## Hierarchical statistical bootstrap:
+## Hierarchical statistical bootstrap
 
 <img src="https://github.com/kpannoni/sem-mitos/bootstrap/bootstrap_schematic.png" alt="schematic of the bootstrap analysis" width="40"/>
 
 <!-- describe the bootstrap and maybe include schematic. Include description of sampling at each level. -->
-Due to the hierarchical nature of the dataset, a hierarchical bootstrap was performed on mitochondria area and mitochondria count per 100 &micro;m<sup>2</sup> based on [Saravanan et al, 2020](https://nbdt.scholasticahq.com/article/13927-application-of-the-hierarchical-bootstrap-to-multi-level-data-in-neuroscience). Data was randomly sampled at the level of animal, stub (hippocampal section) and then tile. The median of the resampled data was calculated for each group (layer and genotype). For the bootstrap of individual mitochondria area, the data was additionally resampled at the level of mitochondria. This process was repeated a total of 10,000 times to generate a population of 10,000 medians. We then compared across layers and genotypes by calculating the proportion of bootstrap repetitions where the first group was larger than the second group.
+Due to the hierarchical nature of the dataset, a hierarchical bootstrap was performed on mitochondria area and mitochondria count per 100 &micro;m<sup>2</sup> based on [Saravanan et al, 2020](https://nbdt.scholasticahq.com/article/13927-application-of-the-hierarchical-bootstrap-to-multi-level-data-in-neuroscience). Data was randomly sampled at the level of animal, stub (hippocampal section) and then tile. The median of the resampled data was calculated for each group (layer and genotype). For the bootstrap of individual mitochondria area, the data was additionally resampled at the level of individual mitochondria. This process was repeated a total of 10,000 times to generate a population of 10,000 medians. The bootstrap medians were compared across layers and genotypes by calculating the proportion of bootstrap repetitions where group 1 was larger than group 2.
 
 #### Mitochondria Area
 
@@ -143,4 +135,6 @@ Due to the hierarchical nature of the dataset, a hierarchical bootstrap was perf
 <!-- include summary bar plot for mitochondria count in the cKO and CTL-->
 <img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_mito_count_CTL_layers.tif" alt="Proportion of bootstrap wins comparing mitochondria count across layers in CTL CA2" width="40"/>
 <img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_CTL_cKO_mito_count.tif" alt="Proportion of bootstrap wins comparing mitochondria count across genotypes" width="40"/>
+
+***Detailed results of the bootstrap are shown in Supplemental Figures 3 & 4 in the preprint.***
 
