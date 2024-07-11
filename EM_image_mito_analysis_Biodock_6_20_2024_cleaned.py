@@ -120,7 +120,7 @@ mito_data["Perimeter_um"] = mito_data["Perimeter"] * scale_um_per_px
 mito_data["Feret_diam_um"] = mito_data["Feret Diameter Maximum"] * scale_um_per_px
 
 dendrite_data["Den_Width_um"] = dendrite_data["Length of Minor Axis"] * scale_um_per_px
-dendrite_data["Den_Length_um"] = dendrite_data["Length of Major Axis"] * scale_um_per_px
+dendrite_data["Den_Length_um"] = dendrite_data["Feret Diameter Maximum"] * scale_um_per_px
 
 print("\nRemoving mitochondria larger than 2 microns squared or smaller than 0.01 microns squared...")
 
@@ -246,6 +246,18 @@ if num_flag >= 1:
 for tile in flagged.index:
     mito_data = mito_data[~mito_data["Tile"].str.contains(tile)]
     mito_avgs = mito_avgs[~mito_avgs.index.str.contains(tile)]
+    
+#%%% From the dendrite data, we would like to get the number of mitochondria in each dendrite / length of the dendrite. This will be used to eventually compare to a different dataset.
+
+# Filter the dendrite data to get only dendrites that have at least one mitochondria in them.
+dendrites_with_mitos = dendrite_data.dropna(subset=['Number of Dendritic mitochondria within Dendrite Object']).reset_index(drop=True)[["Object ID", "Genotype", "Animal", "Layer", "Stub", "Tile", "Number of Dendritic mitochondria within Dendrite Object", "Den_Length_um", "Den_Area_um_sq"]].rename(columns={'Number of Dendritic mitochondria within Dendrite Object':'Num_mitos_in_dendrite'})
+
+# Make a new column to calculate the number of mitochodnria / dendrite length (in microns)
+dendrites_with_mitos["Mitos_per_den_lenth"] = dendrites_with_mitos["Num_mitos_in_dendrite"] / dendrites_with_mitos["Den_Length_um"]
+
+# Take a look at the group averages
+
+dendrites_with_mitos_group = round(dendrites_with_mitos.groupby(["Genotype","Layer"]).mean(numeric_only=True)[["Num_mitos_in_dendrite","Den_Length_um","Mitos_per_den_lenth"]],2)
     
 #%%% Normalize the data of interest to the CTL average in a separate dataframe. This data will be used for figure plots in Figure 4 of the manuscript.
 
