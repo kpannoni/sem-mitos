@@ -4,7 +4,7 @@ Quantifying morphometrics of dendritic mitochondria from segmented SEM images.
 ## MCU-enriched dendritic mitochondria regulate plasticity in distinct hippocampal circuits
 
 This repository is for analysis codes related to the BioRxiv preprint by ***Pannoni et al., 2024***.<br>
-[Read the Preprint here.](https://doi.org/10.1101/2023.11.10.566606)
+[Read the preprint here.](https://doi.org/10.1101/2023.11.10.566606)
 
 ## Dataset
 
@@ -123,7 +123,7 @@ Custom functions that will be called by the main analysis code. <br>
 
 ### Wild-type mitochondria across CA2 layers
 
-- There is considerable morphological heterogeneity across dendritic layers of CA2.
+- There is considerable morphological heterogeneity of mitochondria across dendritic layers of CA2.
 - Mitochondria are larger, longer and more numerous in the distal dendrites (SLM) than the proximal dendrites (SR) of CA2.
 
 ### Comparing mitochondria in MCU cKO (cKO) to control (CTL)
