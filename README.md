@@ -8,14 +8,12 @@ This repository is for analysis codes related to the BioRxiv preprint by ***Pann
 
 ## Dataset
 
-Dataset was generated using a custom [Biodock AI](https://biodock.ai) model to selectively segment dendritic mitochondria in scanning electron microscopy (SEM) images from mouse hippocampus.
-SEM images were taken at 2nm resolution with a ThermoFisher Aprea Volumescope.
+Dataset was generated using a custom [Biodock AI](https://biodock.ai) model to selectively segment dendritic mitochondria in scanning electron microscopy (SEM) images from mouse hippocampus, which were taken at 2nm resolution with a ThermoFisher Aprea Volumescope.
 
 <!-- add an example image of the ROIs-->
 
 ### Training dataset:
-Five 100 &micro;m<sup>2</sup> ROIs were taken from the basal, proximal and distal dendrites of CA2 from two control (CTL) and two MCU KO mice (cKO). <br>
-ROIs were selected to represent a variety of features in the dataset. 
+The Biodock AI was trained on five 100 &micro;m<sup>2</sup> images from each dendritic layer of CA2 (basal, proximal and distal) from two control (CTL) and two MCU KO mice (cKO).  Training image ROIs were manually selected to represent a variety of features in the dataset. 
 
 After running the AI on a test dataset, images that had >5 errors were edited and added to the training to improve AI performance.
 
@@ -33,9 +31,9 @@ Large 150 x 150 &micro;m ROIs from each layer were tiled into 100 &micro;m<sup>2
 - Length of minor axis (pixels)
 - (X, Y) coordinates
 
-View the exported data from Biodock [here](Biodock_AI_V6_output_den_mitos_dendrites_cKO_CTL_CA2.csv).
+Get the exported data from Biodock [here](Biodock_AI_V6_output_den_mitos_dendrites_cKO_CTL_CA2.csv).
 
-## Validation of AI performance with manual spot check
+## Validation of AI performance
 
 A manual spot check of about 1% of the dataset was performed to validate the performance of the trained AI. 
 
@@ -59,7 +57,7 @@ The spot check found an accuracy of about 97% across both genotypes.
 #### Required packages:
 
 + [easygui 0.98.3](https://pypi.org/project/easygui/)
-+ [pingouin 0.5.3](https://pingouin-stats.org/build/html/index.html)
++ [pingouin 0.5.4](https://pingouin-stats.org/build/html/index.html)
 
 #### Packages included with Anaconda:
 
@@ -71,11 +69,12 @@ The spot check found an accuracy of about 97% across both genotypes.
 
 ### Main analysis code: 
 [EM_image_mito_analysis_Biodock_6_20_2024_cleaned.py](EM_image_mito_analysis_Biodock_6_20_2024_cleaned.py)<br>
-**Input:**  Object level data exported from Biodock <br>
+**Input:**  `Biodock_AI_V6_output_den_mitos_dendrites_cKO_CTL_CA2.csv`, the object level data exported from Biodock<br>
 *User will be prompted to select the CSV file.*
 #### Before you run:
-- Set the name of the save directory under `dirName`
-- Make sure the meta data about the analysis in the first code block is correct (AI version, dataset, tile size and sampling)
+- Download the [data file](Biodock_AI_V6_output_den_mitos_dendrites_cKO_CTL_CA2.csv) and codes
+- Set the name of your save directory under `dirName` (this directory will be created)
+- Make sure the meta data about the analysis in the first code block is correct (AI version, dataset, etc.)
 - Add any relevant notes in the `notes` variable, which will be printed in `analysis_summary.txt` along with the other meta data
 - Make sure the `mito_functions.py` code is in your working directory along with this analysis code
 
@@ -97,7 +96,7 @@ Custom functions that will be called by the main analysis code. <br>
   
 ### Bootstrap analysis code: 
 [mito_bootstrap_median_for_Biodock_7_1_2024_cleaned.py](mito_bootstrap_median_for_Biodock_7_1_2024_cleaned.py)<br>
-**Input:** CSV files `SEM_indiv_mito_data.csv` and `SEM_mito_tile_avgs.csv` exported from the main analysis code
+**Input:** CSV files `SEM_indiv_mito_data.csv` and `SEM_mito_tile_avgs.csv` saved by the main analysis code
 #### Before you run:
 - Run the `EM_image_mito_analysis_Biodock_6_20_2024_cleaned.py` code first to process and export the data
 - Set the location of the data directory with your two CSV files under the `loc` variable
