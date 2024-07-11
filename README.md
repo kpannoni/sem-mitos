@@ -3,14 +3,27 @@ Quantifying morphometrics of dendritic mitochondria from segmented SEM images.
 
 ## MCU-enriched dendritic mitochondria regulate plasticity in distinct hippocampal circuits
 
-This repository is for analysis codes related to the preprint below:<br>
-[Read the Preprint](https://doi.org/10.1101/2023.11.10.566606)
+This repository is for analysis codes related to the BioRxiv preprint by ***Pannoni et al., 2024***.<br>
+[Read the Preprint here.](https://doi.org/10.1101/2023.11.10.566606)
 
 ## Dataset
 
-This dataset was generated using a custom [Biodock AI](https://biodock.ai) model to selectively segment dendritic mitochondria in scanning electron microscopy (SEM) images from mouse hippocampus.
+Dataset was generated using a custom [Biodock AI](https://biodock.ai) model to selectively segment dendritic mitochondria in scanning electron microscopy (SEM) images from mouse hippocampus.
+SEM images were taken at 2nm resolution with a ThermoFisher Aprea Volumescope.
 
-Dendritic mitochondria were segmented in scanning electron microscopy (SEM) images from basal, proximal and distal CA2 in 3 MCU cKO and 3 control mice.
+<!-- add an example image of the ROIs-->
+
+### Training dataset:
+Five 100 &micro;m<sup>2</sup> ROIs were taken from the basal, proximal and distal dendrites of CA2 from two control (CTL) and two MCU KO mice (cKO). <br>
+ROIs were selected to represent a variety of features in the dataset. 
+
+After running the AI on a test dataset, images that had >5 errors were edited and added to the training to improve AI performance.
+
+**The final AI was trained on 80 images.**<br>
+_Images used for training were not used in the analysis._
+
+### Analysis dataset:
+Dendritic mitochondria were segmented in basal, proximal and distal dendrites of CA2 in three hippocampal sections from three MCU cKO and three control mice.
 Large 150 x 150 &micro;m ROIs from each layer were tiled into 100 &micro;m<sup>2</sup> tiles, and every 8th tile was sampled for the analysis.
 
 #### Parameters of interest from Biodock:
@@ -24,7 +37,7 @@ View the exported data from Biodock [here](Biodock_AI_V6_output_den_mitos_dendri
 
 ## Validation of AI performance with manual spot check
 
-A manual spot check of about 1% of the dataset was performed. 
+A manual spot check of about 1% of the dataset was performed to validate the performance of the trained AI. 
 
 #### Three different types of errors were manually counted for each image in the spot check: 
 1) Number of missed dendritic mitochondria  *(false negatives)*
