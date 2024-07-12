@@ -249,8 +249,11 @@ for tile in flagged.index:
     
 #%%% From the dendrite data, we would like to get the number of mitochondria in each dendrite / length of the dendrite. This will be used to eventually compare to a different dataset.
 
-# Filter the dendrite data to get only dendrites that have at least one mitochondria in them.
+# Filter the dendrite data to get only dendrites that have at least one mitochondria in them. Start by removing NaN entries
 dendrites_with_mitos = dendrite_data.dropna(subset=['Number of Dendritic mitochondria within Dendrite Object']).reset_index(drop=True)[["Object ID", "Genotype", "Animal", "Layer", "Stub", "Tile", "Number of Dendritic mitochondria within Dendrite Object", "Den_Length_um", "Den_Area_um_sq"]].rename(columns={'Number of Dendritic mitochondria within Dendrite Object':'Num_mitos_in_dendrite'})
+
+# Also filter to remove any rows where the number of mitos are 0
+dendrites_with_mitos = dendrites_with_mitos.query('Num_mitos_in_dendrite > 0').reset_index()
 
 # Make a new column to calculate the number of mitochodnria / dendrite length (in microns)
 dendrites_with_mitos["Mitos_per_den_length"] = dendrites_with_mitos["Num_mitos_in_dendrite"] / dendrites_with_mitos["Den_Length_um"]
