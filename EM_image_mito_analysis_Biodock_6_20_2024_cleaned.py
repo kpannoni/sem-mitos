@@ -253,11 +253,12 @@ for tile in flagged.index:
 dendrites_with_mitos = dendrite_data.dropna(subset=['Number of Dendritic mitochondria within Dendrite Object']).reset_index(drop=True)[["Object ID", "Genotype", "Animal", "Layer", "Stub", "Tile", "Number of Dendritic mitochondria within Dendrite Object", "Den_Length_um", "Den_Area_um_sq"]].rename(columns={'Number of Dendritic mitochondria within Dendrite Object':'Num_mitos_in_dendrite'})
 
 # Make a new column to calculate the number of mitochodnria / dendrite length (in microns)
-dendrites_with_mitos["Mitos_per_den_lenth"] = dendrites_with_mitos["Num_mitos_in_dendrite"] / dendrites_with_mitos["Den_Length_um"]
+dendrites_with_mitos["Mitos_per_den_length"] = dendrites_with_mitos["Num_mitos_in_dendrite"] / dendrites_with_mitos["Den_Length_um"]
 
 # Take a look at the group averages
 
-dendrites_with_mitos_group = round(dendrites_with_mitos.groupby(["Genotype","Layer"]).mean(numeric_only=True)[["Num_mitos_in_dendrite","Den_Length_um","Mitos_per_den_lenth"]],2)
+dendrites_with_mitos_group = round(dendrites_with_mitos.groupby(["Genotype","Layer"]).mean(numeric_only=True)[["Num_mitos_in_dendrite","Den_Length_um","Mitos_per_den_length"]],2)
+
     
 #%%% Normalize the data of interest to the CTL average in a separate dataframe. This data will be used for figure plots in Figure 4 of the manuscript.
 
@@ -743,6 +744,10 @@ mito_aspect_animal_trans = prism_format(data = animal_avgs, data_col = "Aspect_R
 mito_count_animal_trans = prism_format(data = animal_avgs, data_col = "Count_100um2", col=["Genotype","Animal"], row="Layer", sort="Genotype", file_path = os.path.join(prism_path, str("Trans_Med_Mito_count_100um2.csv")))
 
 mito_dist_animal_trans = prism_format(data = animal_avgs, data_col = "NN_Dist_um", col=["Genotype","Animal"], row="Layer", sort="Genotype", file_path = os.path.join(prism_path, str("Trans_Med_Mito_dist_NN.csv")))
+
+# Lastly, get a table for the mitochondria per dendrite data that has the number of mitochondria / dendrite length by genotype and layer. Each group should be a separate column (CTL SR, CTL SLM, cKO SR, CTL cKO)
+
+mitos_per_den = prism_format(data = dendrites_with_mitos, data_col = "Mitos_per_den_length", col=["Genotype","Layer"], sort="Genotype", file_path = os.path.join(prism_path, str("Mitos_per_dendrite_length_um.csv")))
 
 print("\nCode finished! \n\nSeveral main CSV files have been saved with the individual and averaged data, along with a txt file summary of the analysis. A subfolder was created for the Prism data files and for the main figure images. Additional figures and stats will be in the 'Figures and Stats' subfolder. \n\n File location: " + str(os.path.join(os.getcwd(), dirName)))
 
