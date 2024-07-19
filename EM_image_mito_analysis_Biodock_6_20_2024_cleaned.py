@@ -262,6 +262,10 @@ dendrites_with_mitos["Mitos_per_den_length"] = dendrites_with_mitos["Num_mitos_i
 
 dendrites_with_mitos_group = round(dendrites_with_mitos.groupby(["Genotype","Layer"]).mean(numeric_only=True)[["Num_mitos_in_dendrite","Den_Length_um","Mitos_per_den_length"]],2)
 
+# Save the dendrites with mito data as CSV files
+dendrites_with_mitos_group.to_csv(os.path.join(dirName, str("SEM_mitos_per_dendrite_summary_mean.csv")))
+dendrites_with_mitos.to_csv(os.path.join(dirName, str("SEM_mitos_per_dendrite_indiv.csv")))
+
     
 #%%% Normalize the data of interest to the CTL average in a separate dataframe. This data will be used for figure plots in Figure 4 of the manuscript.
 
@@ -732,6 +736,10 @@ mito_indiv_Feret = prism_format(data = mito_data, data_col = "Feret_diam_um", co
 # Spit the individual mito data by animal to look at each animal's distribution. With this we can check for animal to animal variability and any outliers. Right now we'll just look at area.
 # This will save a separate file for each animal in the dataset
 [prism_format(data = mito_data_sub.where(mito_data_sub["Animal"]==a).dropna(), data_col = "Area_um_sq", col=["Genotype", "Layer"], file_path = os.path.join(prism_path, str("Animal_indiv_mito_area_" + str(a) + ".csv"))) for a in animal_list]
+
+# We'll also look at the section level data for mitochondria area
+
+mito_area_section = prism_format(data = section_avgs.reset_index(), data_col = "Area_um_sq", col=["Animal", "Section_ID"], row= "Layer", file_path = os.path.join(prism_path, str("Section_mito_area.csv")))
 
 # Now print the animal means organized to plot the groups on the same plot.
 # We want the columns to be the animals, organized with cre - animals first, and the rows to be dendritic layer.
