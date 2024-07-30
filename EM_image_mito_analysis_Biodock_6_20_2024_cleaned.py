@@ -250,7 +250,7 @@ for tile in flagged.index:
 #%%% From the dendrite data, we would like to get the number of mitochondria in each dendrite / length of the dendrite. This will be used to eventually compare to a different dataset.
 
 # Filter the dendrite data to get only dendrites that have at least one mitochondria in them. Start by removing NaN entries
-dendrites_with_mitos = dendrite_data.dropna(subset=['Number of Dendritic mitochondria within Dendrite Object']).reset_index(drop=True)[["Object ID", "Genotype", "Animal", "Layer", "Stub", "Tile", "Number of Dendritic mitochondria within Dendrite Object", "Den_Length_um", "Den_Area_um_sq"]].rename(columns={'Number of Dendritic mitochondria within Dendrite Object':'Num_mitos_in_dendrite'})
+dendrites_with_mitos = dendrite_data.dropna(subset=['Number of Dendritic mitochondria within Dendrite Object']).reset_index(drop=True)[["Object ID", "Genotype", "Animal", "Layer", "Stub", "Tile", "Number of Dendritic mitochondria within Dendrite Object", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq", "Dendrite Object parent ID"]].rename(columns={'Number of Dendritic mitochondria within Dendrite Object':'Num_mitos_in_dendrite'})
 
 # Also filter to remove any rows where the number of mitos are 0
 dendrites_with_mitos = dendrites_with_mitos.query('Num_mitos_in_dendrite > 0').reset_index()
@@ -260,11 +260,49 @@ dendrites_with_mitos["Mitos_per_den_length"] = dendrites_with_mitos["Num_mitos_i
 
 # Take a look at the group averages
 
-dendrites_with_mitos_group = round(dendrites_with_mitos.groupby(["Genotype","Layer"]).mean(numeric_only=True)[["Num_mitos_in_dendrite","Den_Length_um","Mitos_per_den_length"]],2)
+dendrites_with_mitos_group =  round(dendrites_with_mitos.groupby(["Genotype","Layer"]).mean(numeric_only=True)[["Num_mitos_in_dendrite","Den_Length_um","Mitos_per_den_length"]],2)
 
 # Save the dendrites with mito data as CSV files
 dendrites_with_mitos_group.to_csv(os.path.join(dirName, str("SEM_mitos_per_dendrite_summary_mean.csv")))
 dendrites_with_mitos.to_csv(os.path.join(dirName, str("SEM_mitos_per_dendrite_indiv.csv")))
+
+# Let's take a closer look at the dendrite statistics before and after subsetting
+
+# Get summary statistics for the dendrite objects before subsetting
+den_stats_before_sub = dendrite_data[["Genotype", "Layer", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq", "Number of Dendritic mitochondria within Dendrite Object"]] .groupby(["Genotype", "Layer"]).describe().rename(columns={'Number of Dendritic mitochondria within Dendrite Object':'Num_mitos_in_dendrite'}).T
+
+den_stats_sub = dendrites_with_mitos[["Genotype", "Layer", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq", "Num_mitos_in_dendrite"]] .groupby(["Genotype", "Layer"]).describe().T
+
+# Filter to save just the basal and proximal dendrites of the CTL for now
+
+# Get the stats for the dendrite data before subsetting
+den_stats_before_sub_CTL = den_stats_before_sub["MCC Cre -"][["Proximal", "Distal"]]
+# Save to CSV file
+den_stats_before_sub_CTL.to_csv(os.path.join(dirName, str("Dendrite_stats_before_sub.csv")))
+
+# Get the stats for the dendrite data after subsetting
+den_stats_sub_CTL = den_stats_sub["MCC Cre -"][["Proximal", "Distal"]]
+# Save to CSV file
+den_stats_sub_CTL.to_csv(os.path.join(dirName, str("Dendrite_stats_after_sub.csv")))
+
+# Get how many dendrites have 1, 2, 3 mitochondria (etc) for each group
+
+# Empty dataframe to store the counts
+num_mito_per_den_counts = pd.DataFrame()
+
+# Get the counts for the proximal dendrites and add to the dataframe
+num_mito_per_den_counts["Proximal"] = dendrite_data[(dendrite_data["Layer"] == "Proximal") & (dendrite_data["Genotype"] == "MCC Cre -")]["Number of Dendritic mitochondria within Dendrite Object"].value_counts(dropna=False)
+
+# Get the counts for the distal dendrites and add to the dataframe
+num_mito_per_den_counts["Distal"] = dendrite_data[(dendrite_data["Layer"] == "Distal") & (dendrite_data["Genotype"] == "MCC Cre -")]["Number of Dendritic mitochondria within Dendrite Object"].value_counts(dropna=False)
+
+
+# Sort them so that NaN comes first
+num_mito_per_den_counts = num_mito_per_den_counts.sort_index(na_position='first')
+
+num_mito_per_den_counts = num_mito_per_den_counts.rename_axis("Mitochondria per Dendrite")
+
+num_mito_per_den_counts.to_csv((os.path.join(dirName, str("mito_number_per_den_value_counts_CTL.csv"))), na_rep='NaN')
 
     
 #%%% Normalize the data of interest to the CTL average in a separate dataframe. This data will be used for figure plots in Figure 4 of the manuscript.
