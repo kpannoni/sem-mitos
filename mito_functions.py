@@ -582,9 +582,9 @@ def WT_KO_violin(data, data_col, save_path, plot_type = "violin", group = "Genot
 
     # Save the figure as a PNG file
     if group == 0: # if no further grouping
-        plt.savefig(os.path.join(save_path, str(data_col + "_by_layer_violin.png")), format='png', dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(save_path, str(data_col + f"_by_layer_{plot_type}.png")), format='png', dpi=300, bbox_inches='tight')
     else: # if a group was used, include it in the filename
-        plt.savefig(os.path.join(save_path, str(data_col + "_by_" + str(group) + "_violin.png")), format='png', dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(save_path, str(data_col + "_by_" + str(group) + f"_{plot_type}.png")), format='png', dpi=300, bbox_inches='tight')
     
         
         

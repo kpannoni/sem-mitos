@@ -1,0 +1,7 @@
+Genotype,Layer,Area_um_sq,Aspect_Ratio,Perimeter_um,Feret_diam_um,NN_Dist_um
+MCC Cre +,Basal,0.15,1.17,0.97,0.37,1.06
+MCC Cre +,Proximal,0.14,1.55,1.13,0.45,0.95
+MCC Cre +,Distal,0.19,1.66,1.4,0.56,0.65
+MCC Cre -,Basal,0.16,1.09,0.96,0.36,1.15
+MCC Cre -,Proximal,0.15,1.6,1.17,0.48,1.15
+MCC Cre -,Distal,0.19,1.63,1.4,0.56,0.69
