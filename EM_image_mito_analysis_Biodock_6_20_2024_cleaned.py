@@ -352,11 +352,17 @@ num_groups = len(group_list)
 # Go back and add count before here
 if num_groups >1:
     
-    # get the group averages by layer
-    genotype_avg = round(mito_data.groupby(["Genotype", "Layer"]).median(numeric_only=True),2)
+    # Get the group medians by layer
+    genotype_med = round(mito_data.groupby(["Genotype", "Layer"]).median(numeric_only=True),2)
     
-    #Subset to get only the metrics of interest
-    genotype_sub = genotype_avg.loc[:, ("Area_um_sq", "Aspect_Ratio", "Perimeter_um", "Feret_diam_um", "NN_Dist_um")]
+    # Also look at the group standard deviations
+    genotype_std = round(mito_data.groupby(["Genotype", "Layer"]).std(numeric_only=True),2)
+    
+    # Subset to get only the metrics of interest
+    genotype_sub = genotype_med.loc[:, ("Area_um_sq", "Aspect_Ratio", "Perimeter_um", "Feret_diam_um", "NN_Dist_um")]
+    
+    # Subset the standard dev table as well with the same columns
+    genotype_sub_std = genotype_std.loc[:, ("Area_um_sq", "Aspect_Ratio", "Perimeter_um", "Feret_diam_um", "NN_Dist_um")]
     
     # Get count from the mito_avgs dataframe
     genotype_sub["Count_100um2"] = round(mito_avgs[["Genotype", "Layer", "Count"]].groupby(["Genotype", "Layer"]).median(),1)
@@ -365,7 +371,8 @@ if num_groups >1:
     # print to the console
     print("\n Group Averages:\n", genotype_sub)
     # Save as a CSV file
-    genotype_sub.to_csv(os.path.join(dirName, str("SEM_mito_group_summary.csv")))
+    genotype_sub.to_csv(os.path.join(dirName, str("SEM_mito_group_summary_medians.csv")))
+    genotype_sub_std.to_csv(os.path.join(dirName, str("SEM_mito_group_summary_std.csv")))
     
     # Get 75% percentile stats for area and diameter to use to pick representative images
     desc_stats = mito_data[["Area", "Feret Diameter Maximum", "Genotype", "Layer"]].groupby(["Genotype", "Layer"]).describe()
@@ -406,7 +413,8 @@ KO_colors = sns.cubehelix_palette(n_colors = 3, start=1.05, light=0.85, dark=0.3
 
 print("\nAnalyzing denditic mitochondria in the CTL (not normalized):")
 
-# violin plot for individual mito area in the CTL 
+# violin plot for individual mito area in the CTL
+# If you want to run an ANOVA with any of these plots, add "stats = 1" to the line below and an ANOVA and post hoc tests will be run between your defined groups and saved as CSV files and significance added to the plots
 WT_KO_violin(data = WT_data, data_col = "Area_um_sq", group=0, title ="CTL CA2", save_path = fig_path, units = "Mito Area (\u00B5m\u00B2)", y_range = [0,0.5], colors = WT_colors)
 
 # violin plot for mito Feret's diameter in CTL:
@@ -427,16 +435,16 @@ print("\nAnalyzing denditic mitochondria in the CTL and MCU KO (normalized to CT
 violin_colors = [item for pair in zip(WT_colors, KO_colors + [0]) for item in pair]
 
 # violin plot for individual mito area in cKO and CTL normalized to CTL
-WT_KO_violin(data = mito_data, data_col = "Norm_Area", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Mito Area \nNorm. to CTL mean", y_range = [0,2], colors = violin_colors, stats=1)
+WT_KO_violin(data = mito_data, data_col = "Norm_Area", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Mito Area \nNorm. to CTL mean", y_range = [0,2], colors = violin_colors)
 
 # violin plot for mito Feret's diameter normalized to CTL:
-WT_KO_violin(data = mito_data, data_col = "Norm_Diam", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Feret's Diameter \nNorm. to CTL mean", y_range = [0,1.8], colors = violin_colors, stats=1)
+WT_KO_violin(data = mito_data, data_col = "Norm_Diam", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Feret's Diameter \nNorm. to CTL mean", y_range = [0,1.8], colors = violin_colors)
 
 # violin plot for mito aspect ratio normalized to CTL:
-WT_KO_violin(data = mito_data, data_col = "Norm_Aspect", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Aspect Ratio \nNorm. to CTL mean", y_range = [0,2], colors = violin_colors, stats=1)
+WT_KO_violin(data = mito_data, data_col = "Norm_Aspect", title = "CA2 CTL vs cKO", save_path = fig_path, units = "Aspect Ratio \nNorm. to CTL mean", y_range = [0,2], colors = violin_colors)
 
 # violin plot for nearest neighbor distance normalized to CTL:
-WT_KO_violin(data = mito_data, data_col = "Norm_Dist", title = "CA2 CTL vs cKO", save_path = fig_path, units = "NN Distance \nNorm. to CTL mean", y_range = [0,3], colors = violin_colors, stats=1)
+WT_KO_violin(data = mito_data, data_col = "Norm_Dist", title = "CA2 CTL vs cKO", save_path = fig_path, units = "NN Distance \nNorm. to CTL mean", y_range = [0,3], colors = violin_colors)
 
 
 #%%% Now lets make a few more plots to look at mitochondrial content across layers in the cKO and CTL. We will plot mitochondrial count and mitochondrial total area.
@@ -454,10 +462,10 @@ print("\nMitochondrial content (per tile):")
 # Get metrics for mitochondrial content like the number of mitochondria and total mito area. These will be at the level of image tile and will be plotted as box plots instead of violin plots.
 
 # Box plot of total mitochondria area per tile (100 um2)
-WT_KO_violin(data = mito_avgs, data_col = "Total_mito_Area_um_sq", plot_type ="box", save_path = plot_path, units = "Total mito Area \nper 100 \u00B5m\u00B2", y_range = [0,8], stats=1)
+WT_KO_violin(data = mito_avgs, data_col = "Total_mito_Area_um_sq", plot_type ="box", title = "CA2 CTL vs cKO", save_path = plot_path, units = "Total mito Area \nper 100 \u00B5m\u00B2", y_range = [0,8])
 
 # Box plot of Number of mitos per tile (100 um2)
-WT_KO_violin(data = mito_avgs, data_col = "Count", plot_type ="box", save_path = plot_path, units = "Mito Count / 100 \u00B5m\u00B2", y_range = [0,60], stats=1)
+WT_KO_violin(data = mito_avgs, data_col = "Count", plot_type ="box", title = "CA2 CTL vs cKO", save_path = plot_path, units = "Mito Count / 100 \u00B5m\u00B2", y_range = [0,60])
 
 # Generate a scatter plot with total mito area on the X axis and mitochondria count on the Y. This is part of Figure 4 of the manuscript.
 
@@ -538,7 +546,7 @@ norm_to_ctl_grouped = round(norm_to_ctl_tile.groupby(["Genotype", "Layer"], obse
 
 # Create a dataframe for the normalized data
 # grab the normalized data for the other metrics from the genotype_avg dataframe
-norm_indiv_data = genotype_avg.loc[:, ("Norm_Area", "Norm_Aspect", "Norm_Diam", "Norm_Dist")]
+norm_indiv_data = genotype_med.loc[:, ("Norm_Area", "Norm_Aspect", "Norm_Diam", "Norm_Dist")]
 
 # combine the normalized data into a dataframe
 norm_to_ctl_grouped = pd.concat([norm_indiv_data, norm_to_ctl_grouped], axis=1)
