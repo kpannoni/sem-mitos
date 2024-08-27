@@ -114,7 +114,7 @@ def get_boot_sample( orig_df, data_col, lev1_col, lev2_col, lev3_col = [], group
         group_list = list(set(group))
         try:
             group_order = ["MCC Cre -", "MCC Cre +"] #!!! sort so the CTL is first. 
-            # If you have different labels for cKO and CTL you should put them above and make sure the CTL is first in the list
+            # If you have different labels for cKO and CTL, change them above and make sure the CTL is first in the list
             group_list = sorted(group_list, key=lambda x: group_order.index(x)) # to put the layers in order
         except ValueError:
             pass
@@ -500,9 +500,9 @@ def direct_prob_comp(metric_name, group1, group2, groups=["CTL", "cKO"], save_di
 
 #%%% Define function to plot a probability matrix
 
-def plot_prob_dist( matrix, p, group_labels, title, subplots = 1, save_dir = os.getcwd(), figsize = (6,4), bins = 100):
+def plot_prob_dist( matrix, p, group_labels, title, subplots = 1, print_p = 1, save_dir = os.getcwd(), figsize = (6,4), bins = 100):
     
-    ''' Function to plot a probability distribution comparing two groups. Each probability distribution will show the p value in the text. By default, there is one matrix plotted on a single plot. However, you can plot multiple matrices on different subplots if you specify the number of subplots. If you have more than one subplot, you need to include the same number of matrices, p values and group labels as you have subplots. The group labels should be provided in the order of Y first, then X. The title you provide will be used in the plot filename, so make it informative.
+    ''' Function to plot a probability distribution comparing two groups. Each probability distribution will show the p value in the text. By default, there is one matrix plotted on a single plot. However, you can plot multiple matrices on different subplots if you specify the number of subplots. If you have more than one subplot, you need to include the same number of matrices, p values and group labels as you have subplots. The group labels should be provided in the order of Y first, then X. The title you provide will be used in the plot filename, so make it informative. If you don't want the P_boot to be printed, set print_p = 0. By default, P_boot (proportion of data in the upper right triangle) will be printed at the bottom of the each plot.
     
     Example group_labels = [["SR", "SLM"], ["SO, "SLM"], ["SO", "SR"]]
     This will plot SR vs SLM, SO vs SLM and then SO vs SR on 3 different subplots.
@@ -515,32 +515,41 @@ def plot_prob_dist( matrix, p, group_labels, title, subplots = 1, save_dir = os.
     if subplots == 1:
         plt.title(f"Probability Distribution:\n{title}", y=20, pad=40, fontsize=14, fontweight="bold")
         
+        # plot the probability matrix
         axes.matshow(matrix, cmap=plt.cm.Blues)
         axes.grid(False)
+        # add diagonal line
         axes.plot([0,bins],[0,bins], color='Grey', linestyle='--', linewidth=2)
+        # set parameters for x and y axes
         axes.set_ylabel(group_labels[0], labelpad=3, fontweight="bold")
         axes.set_xlabel(group_labels[1], labelpad=10, fontweight="bold")
         axes.xaxis.set_label_position('top')
-        axes.xaxis.set_ticks_position('top') 
-        # plt.tick_params(axis='x', which='both', bottom=False) # removes ticks on bottom X axis
-        text_label = "P_boot = " + str(round(p,3))
-        axes.text(bins/20,bins-(bins/50), text_label, fontsize=10) # was 5,bins-2
+        axes.xaxis.set_ticks_position('top')
+        axes.tick_params(axis='both', which='major', labelsize=12)
+        # print the value of P_boot on the plot
+        if print_p:
+            text_label = "P_boot = " + str(round(p,3))
+            axes.text(bins/20,bins-(bins/50), text_label, fontsize=10) # text placement
         
     else:       
         for ax in range(subplots):
-        
+            
+            # plot the probability matrix
             axes[ax].matshow(matrix[ax], cmap=plt.cm.Blues)
             axes[ax].grid(False)
+            # add diagonal line
             axes[ax].plot([0,bins],[0,bins], color='Grey', linestyle='--', linewidth=2)
-            axes[ax].set_ylabel(group_labels[ax][0], labelpad=-5, fontweight="bold", fontsize=12)
+            # set parameters for x and y axes
+            axes[ax].set_ylabel(group_labels[ax][0], labelpad=-7, fontweight="bold", fontsize=12)
             axes[ax].set_xlabel(group_labels[ax][1], labelpad=6, fontweight="bold", fontsize=12)
             axes[ax].xaxis.set_label_position('top')
             axes[ax].xaxis.set_ticks_position('top') 
-            # plt.tick_params(axis='x', which='both', bottom=False) # removes ticks on bottom X axis
-            text_label = "P_boot = " + str(round(p[ax],3))
-            axes[ax].text(bins/20,bins-(bins/50), text_label, fontsize=10)
+            # print the value of P_boot on the plot
+            if print_p:
+                text_label = "P_boot = " + str(round(p[ax],3))
+                axes[ax].text(bins/20,bins-(bins/50), text_label, fontsize=10) # text placement
             
-        plt.suptitle(f"Probability Distribution:\n{title}", y=0.98, fontsize=14, fontweight="bold")
+        plt.suptitle(f"Probability Distribution:\n{title}", y=1, fontsize=14, fontweight="bold")
     
     # save the plot as a file in the given save directory
     filename = os.path.join(save_dir, "prob_dist_" + title + ".png")
