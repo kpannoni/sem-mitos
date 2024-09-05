@@ -129,22 +129,21 @@ Custom functions that will be called by the main analysis code. <br>
 
 ## Hierarchical statistical bootstrap
 
-<img src="https://github.com/kpannoni/sem-mitos/bootstrap/bootstrap_schematic.png" alt="schematic of the bootstrap analysis" width="40"/>
-
 <!-- describe the bootstrap and maybe include schematic. Include description of sampling at each level. -->
 Due to the hierarchical nature of the dataset, a hierarchical bootstrap was performed on mitochondria area and mitochondria count per 100 &micro;m<sup>2</sup> based on [Saravanan et al, 2020](https://nbdt.scholasticahq.com/article/13927-application-of-the-hierarchical-bootstrap-to-multi-level-data-in-neuroscience). Data was randomly sampled at the level of animal, stub (hippocampal section) and then tile. The median of the resampled data was calculated for each group (layer and genotype). For the bootstrap of individual mitochondria area, the data was additionally resampled at the level of individual mitochondria. This process was repeated a total of 10,000 times to generate a population of 10,000 medians. The bootstrap medians were compared across layers and genotypes by calculating the proportion of bootstrap repetitions where group 1 was larger than group 2.
 
+<!--
 #### Mitochondria Area
 
-<!-- include summary bar plot for mitochondria area in the cKO and CTL-->
-<img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_mito_area_CTL_layers.tif" alt="Proportion of bootstrap wins comparing mitochondria area across layers in CTL CA2" width="40"/>
+<!-- include summary bar plot for mitochondria area in the cKO and CTL
+<img src="https://github.com/kpannoni/sem-mitos/bootstrap/prop_bar_plots/Bootstrap_bar_mito_area_CTL_layers.tif" alt="Proportion of bootstrap wins comparing mitochondria area across layers in CTL CA2" width="40"/>
 <img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_CTL_cKO_mito_area.tif" alt="Proportion of bootstrap wins comparing mitochondria area across genotypes" width="40"/>
 
 #### Mitochondria count per 100 &micro;m<sup>2</sup>
 
-<!-- include summary bar plot for mitochondria count in the cKO and CTL-->
+<!-- include summary bar plot for mitochondria count in the cKO and CTL
 <img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_mito_count_CTL_layers.tif" alt="Proportion of bootstrap wins comparing mitochondria count across layers in CTL CA2" width="40"/>
-<img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_CTL_cKO_mito_count.tif" alt="Proportion of bootstrap wins comparing mitochondria count across genotypes" width="40"/>
+<img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_CTL_cKO_mito_count.tif" alt="Proportion of bootstrap wins comparing mitochondria count across genotypes" width="40"/> -->
 
 ***Detailed results of the bootstrap are shown in [Supplemental Figure 3](https://www.biorxiv.org/content/biorxiv/early/2024/04/04/2023.11.10.566606/F6.large.jpg) & [Suppelemental Figure 4](https://www.biorxiv.org/content/biorxiv/early/2024/04/04/2023.11.10.566606/F8.large.jpg) in the preprint.***
 
