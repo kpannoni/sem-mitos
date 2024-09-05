@@ -74,8 +74,7 @@ The spot check found an accuracy of about 97% across both genotypes.
 #### Before you run:
 - Download the [data file](Biodock_AI_V6_output_den_mitos_dendrites_cKO_CTL_CA2.csv) and codes
 - Set the name of your save directory under `dirName` (this directory will be created)
-- Make sure the meta data about the analysis in the first code block is correct (AI version, dataset, etc.)
-- Add any relevant notes in the `notes` variable, which will be printed in `analysis_summary.txt` along with the other meta data
+- Check that the analysis meta data is correct (AI version, dataset, etc.) and add any relevant notes in the `notes` variable. <br>The meta data will be saved in the file `analysis_summary.txt`
 - Make sure the `mito_functions.py` code is in your working directory along with this analysis code
 
 *If you are running the same analysis, you shouldn't have to change the meta data.*
@@ -100,8 +99,7 @@ Custom functions that will be called by the main analysis code. <br>
 #### Before you run:
 - Run the `EM_image_mito_analysis_Biodock_6_20_2024_cleaned.py` code first to process and export the data
 - Set the location of the data directory with your two CSV files under the `loc` variable
-- Set the number of repetitions with `n_boot` (10000 for the analysis)
-- If desired, the number of image tiles and mitochondria to be sampled can be changed in the custom **get_boot_sample()** function by changing the `tile_samp` and `mito_samp` variables
+- If desired, you can change the number of repetitions with `n_boot` or the number of image tiles and mitochondria to be sampled with the `tile_samp` and `mito_samp` variables
 
 
 ## Analysis Methods Overview
@@ -112,7 +110,7 @@ Custom functions that will be called by the main analysis code. <br>
 4. Flag and remove any tiles with less than 2 mitochondria
 5. Normalize the metrics of interest to the average of the control (Cre -) mice
 6. Calculate animal, section, tile and group averages and save the data as separate CSV files
-7. Create violin plots and run two-way ANOVAs with sidak post hoc on each metric of interest
+7. Create violin plots comparing layer and genotype each metric of interest
 8. Create correlation plots of mitochondria count versus total mitochondria area per 100 &micro;m<sup>2</sup> for each layer and each genotype
 9. Compare mitochondrial size and count across layers and genotype with a hierarchical statistical bootstrap
 
@@ -134,17 +132,16 @@ Custom functions that will be called by the main analysis code. <br>
 <!-- describe the bootstrap and maybe include schematic. Include description of sampling at each level. -->
 Due to the hierarchical nature of the dataset, a hierarchical bootstrap was performed on mitochondria area and mitochondria count per 100 &micro;m<sup>2</sup> based on [Saravanan et al, 2020](https://nbdt.scholasticahq.com/article/13927-application-of-the-hierarchical-bootstrap-to-multi-level-data-in-neuroscience). Data was randomly sampled at the level of animal, stub (hippocampal section) and then tile. The median of the resampled data was calculated for each group (layer and genotype). For the bootstrap of individual mitochondria area, the data was additionally resampled at the level of individual mitochondria. This process was repeated a total of 10,000 times to generate a population of 10,000 medians. The bootstrap medians were compared across layers and genotypes by calculating the proportion of bootstrap repetitions where group 1 was larger than group 2.
 
-<!-- #### Mitochondria Area
+#### Bootstrap comparison across Layers in CTL
 
-<!-- include summary bar plot for mitochondria area in the cKO and CTL
-<img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_mito_area_CTL_layers.tif" alt="Proportion of bootstrap wins comparing mitochondria area across layers in CTL CA2" width="40"/>
-<img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_CTL_cKO_mito_area.tif" alt="Proportion of bootstrap wins comparing mitochondria area across genotypes" width="40"/>
+<!-- include summary bar plot for mitochondria area in the cKO and CTL-->
+<img src="https://github.com/kpannoni/sem-mitos/blob/main/bootstrap/prop_bar_plots/Bootstrap_bar_mito_area_CTL_layers.png?raw=true" alt="Proportion of bootstrap wins comparing mitochondria area across layers in CTL CA2" width="250"/> &emsp;
+<img src="https://github.com/kpannoni/sem-mitos/blob/main/bootstrap/prop_bar_plots/Bootstrap_bar_mito_count_CTL_layers.png?raw=true" alt="Proportion of bootstrap wins comparing mitochondria count across layers in CTL CA2" width="250"/> 
 
-#### Mitochondria count per 100 &micro;m<sup>2</sup>
+#### Bootstrap comparison across Genotypes
 
-<!-- include summary bar plot for mitochondria count in the cKO and CTL
-<img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_mito_count_CTL_layers.tif" alt="Proportion of bootstrap wins comparing mitochondria count across layers in CTL CA2" width="40"/>
-<img src="https://github.com/kpannoni/sem-mitos/bootstrap/plots_images/Bootstrap_bar_CTL_cKO_mito_count.tif" alt="Proportion of bootstrap wins comparing mitochondria count across genotypes" width="40"/> -->
+<!-- include summary bar plot for mitochondria count in the cKO and CTL-->
+<img src="https://github.com/kpannoni/sem-mitos/blob/main/bootstrap/prop_bar_plots/Bootstrap_bar_CTL_cKO_mito_area.png?raw=true" alt="Proportion of bootstrap wins comparing mitochondria area across genotypes" width="250"/>&emsp;
+<img src="https://github.com/kpannoni/sem-mitos/blob/main/bootstrap/prop_bar_plots/Bootstrap_bar_CTL_cKO_mito_count.png?raw=true" alt="Proportion of bootstrap wins comparing mitochondria count across genotypes" width="250"/>
 
-***Detailed results of the bootstrap are shown in Supplemental Figures 3 & 4 in the preprint.***
-
+***Detailed results of the bootstrap are shown in [Supplemental Figure 3](https://www.biorxiv.org/content/biorxiv/early/2024/04/04/2023.11.10.566606/F6.large.jpg) & [Suppelemental Figure 4](https://www.biorxiv.org/content/biorxiv/early/2024/04/04/2023.11.10.566606/F8.large.jpg) in the preprint.***
