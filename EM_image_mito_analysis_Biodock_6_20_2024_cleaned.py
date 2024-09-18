@@ -349,10 +349,10 @@ section_avgs.to_csv(os.path.join(dirName, str("SEM_mito_section_avgs.csv")))
 group_list = list(set(mito_data["Genotype"]))
 num_groups = len(group_list)
 
-# Go back and add count before here
+# Now we will put the data together into a summary table summarizing the data by group (Layer and Genotype)
 if num_groups >1:
     
-    # Get the group medians by layer
+    # Get the group medians for the individual mito data by layer
     genotype_med = round(mito_data.groupby(["Genotype", "Layer"]).median(numeric_only=True),2)
     
     # Also look at the group standard deviations
@@ -364,9 +364,18 @@ if num_groups >1:
     # Subset the standard dev table as well with the same columns
     genotype_sub_std = genotype_std.loc[:, ("Area_um_sq", "Aspect_Ratio", "Perimeter_um", "Feret_diam_um", "NN_Dist_um")]
     
-    # Get count from the mito_avgs dataframe
+    # Get median count and std from the mito_avgs dataframe (per tile data)
     genotype_sub["Count_100um2"] = round(mito_avgs[["Genotype", "Layer", "Count"]].groupby(["Genotype", "Layer"]).median(),1)
+    genotype_sub_std["Count_100um2"] = round(mito_avgs[["Genotype", "Layer", "Count"]].groupby(["Genotype", "Layer"]).std(),1)
+    # Get median total mito area and std too
+    genotype_sub["Total_mito_Area_um_sq"] = round(mito_avgs[["Genotype", "Layer", "Total_mito_Area_um_sq"]].groupby(["Genotype", "Layer"]).median(),1)
+    genotype_sub_std["Total_mito_Area_um_sq"] = round(mito_avgs[["Genotype", "Layer", "Total_mito_Area_um_sq"]].groupby(["Genotype", "Layer"]).std(),1)
+    
+    # Number of individual mitochondria for each group
     genotype_sub["N_mitos"] = round(mito_data[["Genotype", "Layer","Object ID"]].groupby(["Genotype", "Layer"]).count(),1)
+    # Number of image tiles for each group
+    genotype_sub["N_tiles"] = round(mito_avgs[["Genotype", "Layer","Section_ID"]].groupby(["Genotype", "Layer"]).count(),1)
+    
     
     # print to the console
     print("\n Group Averages:\n", genotype_sub)
