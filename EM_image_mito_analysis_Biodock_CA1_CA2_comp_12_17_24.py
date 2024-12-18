@@ -150,13 +150,15 @@ else:
 print("\nRemoving dendrites smaller than 0.4 microns squared since these are likely spine heads and primary dendrites wider than 1.9 microns...")
 # get the current number of dendrites
 total_dendrites = len(dendrite_data)
+# Captured the removed dendrites in case we need to look at them
+removed_spine_heads = dendrite_data.query('Den_Area_um_sq < 0.4').reset_index(drop=True)
+# Now we can remove them from the main dataframe
 dendrite_data = dendrite_data.query('Den_Area_um_sq > 0.4').reset_index(drop=True)
 # Get the number of dendrites that were removed, if any
 den_removed_spines = total_dendrites - len(dendrite_data)
 
-#!!! Add another filter here to remove the primary dendrite
-# first make a new df for the primary dendrites
-# dendrites_primary = []
+# Add another filter here to remove the primary dendrites
+# Capture the primary dendrites being removed
 dendrites_primary = dendrite_data.query("Den_Width_um > 1.9").reset_index(drop=True)
 # Now filter out the primary dendrites from the original dataframe 
 dendrite_data = dendrite_data.query("Den_Width_um < 1.9").reset_index(drop=True)
@@ -245,8 +247,6 @@ mito_data["NN_Dist_um"] = mito_data["NN_Dist"] * scale_um_per_px
 
 print("\nGetting the number and total area of mitochondria and dendrites in each tile...")
 
-#!!! Stopped edits here. Here we probably want to group by subregion instead of genotype.
-
 # group the mito data by tile to get averages for the metrics
 mito_avgs = mito_data.groupby("Tile").mean(numeric_only=True) # get the tile averages
 meta_cols = mito_data.groupby("Tile").agg({"Animal": "first", "Subregion": "first", "Genotype": "first", "Layer": "first", "Stub": "first", "Section_ID": "first", "Tile": "count"}) # keep the metadata and count the number of objects (mitochondria) for each tile
@@ -278,81 +278,64 @@ for tile in flagged.index:
     
 #%%% From the dendrite data, we would like to get the number of mitochondria in each dendrite / length of the dendrite. This will be used to eventually compare to a different dataset.
 
-# Filter the dendrite data to get only dendrites that have at least one mitochondria in them. Start by removing NaN entries
-dendrites_with_mitos = dendrite_data.dropna(subset=['Number of Dendritic mitochondria within Dendrite Object']).reset_index(drop=True)[["Object ID", "Genotype", "Animal", "Layer", "Stub", "Tile", "Number of Dendritic mitochondria within Dendrite Object", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq", "Dendrite Object parent ID"]].rename(columns={'Number of Dendritic mitochondria within Dendrite Object':'Num_mitos_in_dendrite'})
-
-# Also filter to remove any rows where the number of mitos are 0
-dendrites_with_mitos = dendrites_with_mitos.query('Num_mitos_in_dendrite > 0').reset_index()
-
-# Make a new column to calculate the number of mitochodnria / dendrite length (in microns)
-dendrites_with_mitos["Mitos_per_den_length"] = dendrites_with_mitos["Num_mitos_in_dendrite"] / dendrites_with_mitos["Den_Length_um"]
-
-# Take a look at the group averages
-
-dendrites_with_mitos_group =  round(dendrites_with_mitos.groupby(["Genotype","Layer"]).mean(numeric_only=True)[["Num_mitos_in_dendrite","Den_Length_um","Mitos_per_den_length"]],2)
-
-# Save the dendrites with mito data as CSV files
-dendrites_with_mitos_group.to_csv(os.path.join(dirName, str("SEM_mitos_per_dendrite_summary_mean.csv")))
-dendrites_with_mitos.to_csv(os.path.join(dirName, str("SEM_mitos_per_dendrite_indiv.csv")))
-
-# Let's take a closer look at the dendrite statistics before and after subsetting
-
-# Get summary statistics for the dendrite objects before subsetting
-den_stats_before_sub = dendrite_data[["Genotype", "Layer", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq", "Number of Dendritic mitochondria within Dendrite Object"]] .groupby(["Genotype", "Layer"]).describe().rename(columns={'Number of Dendritic mitochondria within Dendrite Object':'Num_mitos_in_dendrite'}).T
-
-den_stats_sub = dendrites_with_mitos[["Genotype", "Layer", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq", "Num_mitos_in_dendrite"]] .groupby(["Genotype", "Layer"]).describe().T
-
-# Filter to save just the basal and proximal dendrites of the CTL for now
-
-# Get the stats for the dendrite data before subsetting
-den_stats_before_sub_CTL = den_stats_before_sub["MCC Cre -"][["Proximal", "Distal"]]
-# Save to CSV file
-den_stats_before_sub_CTL.to_csv(os.path.join(dirName, str("Dendrite_stats_before_sub.csv")))
-
-# Get the stats for the dendrite data after subsetting
-den_stats_sub_CTL = den_stats_sub["MCC Cre -"][["Proximal", "Distal"]]
-# Save to CSV file
-den_stats_sub_CTL.to_csv(os.path.join(dirName, str("Dendrite_stats_after_sub.csv")))
-
-# Get how many dendrites have 1, 2, 3 mitochondria (etc) for each group
+# Before subsetting, look at the frequency of mitochondria per dendrite counts in the data
+# Get how many dendrites have 1, 2, 3 mitochondria for each group focusing on CTL SR and SLM
 
 # Empty dataframe to store the counts
 num_mito_per_den_counts = pd.DataFrame()
 
 # Get the counts for the proximal dendrites and add to the dataframe
-num_mito_per_den_counts["Proximal"] = dendrite_data[(dendrite_data["Layer"] == "Proximal") & (dendrite_data["Genotype"] == "MCC Cre -")]["Number of Dendritic mitochondria within Dendrite Object"].value_counts(dropna=False)
+num_mito_per_den_counts["Proximal"] = dendrite_data[dendrite_data["Layer"] == "Proximal"]["Number of Dendritic mitochondria within Dendrite Object"].value_counts(dropna=False)
 
 # Get the counts for the distal dendrites and add to the dataframe
-num_mito_per_den_counts["Distal"] = dendrite_data[(dendrite_data["Layer"] == "Distal") & (dendrite_data["Genotype"] == "MCC Cre -")]["Number of Dendritic mitochondria within Dendrite Object"].value_counts(dropna=False)
-
+num_mito_per_den_counts["Distal"] = dendrite_data[dendrite_data["Layer"] == "Distal"]["Number of Dendritic mitochondria within Dendrite Object"].value_counts(dropna=False)
 
 # Sort them so that NaN comes first
 num_mito_per_den_counts = num_mito_per_den_counts.sort_index(na_position='first')
-
 num_mito_per_den_counts = num_mito_per_den_counts.rename_axis("Mitochondria per Dendrite")
 
 num_mito_per_den_counts.to_csv((os.path.join(dirName, str("mito_number_per_den_value_counts_CTL.csv"))), na_rep='NaN')
 
-# Only in CTL animals, we want to look at dendrite length in each layer for each stub, so we can correlate this with mito area
+# print out the frequencies:
+print("\n Frequency of mitochondria counts per dendrite segment in SR and SLM:\n\n", num_mito_per_den_counts)
 
-dendrites_with_mitos_CTL = dendrites_with_mitos[dendrites_with_mitos["Genotype"] == "MCC Cre -"]
+print("\nFiltering out dendrite segments that don't have any mitochondria...")
 
-CTL_dendrite_stats_by_stub = dendrites_with_mitos_CTL[["Animal", "Stub", "Layer", "Num_mitos_in_dendrite", "Den_Length_um", "Den_Width_um", "Mitos_per_den_length"]].groupby(["Animal","Stub", "Layer"], observed=True).agg(["mean", "median", "std", "count"])
+# Filter the dendrite data to get only dendrites that have at least one mitochondria in them. Start by removing NaN entries
+dendrites_with_mitos = dendrite_data.dropna(subset=['Number of Dendritic mitochondria within Dendrite Object']).reset_index(drop=True)[["Object ID", "Subregion", "Genotype", "Animal", "Layer", "Stub", "Tile", "Number of Dendritic mitochondria within Dendrite Object", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq", "Dendrite Object parent ID"]].rename(columns={'Number of Dendritic mitochondria within Dendrite Object':'Num_mitos_in_dendrite'})
 
-# We need to pull the mitos from the mito_data that match the mitos in den_with_mitos_CTL
+# Also filter to remove any rows where the number of mitos are 0
+dendrites_with_mitos = dendrites_with_mitos.query('Num_mitos_in_dendrite > 0').reset_index()
+
+# Let's take a closer look at the dendrite statistics before and after subsetting
+
+# Get summary statistics for the dendrite objects before subsetting
+den_stats_before_sub = dendrite_data[[comparison, "Layer", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq", "Number of Dendritic mitochondria within Dendrite Object"]] .groupby([comparison, "Layer"]).describe().rename(columns={'Number of Dendritic mitochondria within Dendrite Object':'Num_mitos_in_dendrite'}).T
+
+den_stats_sub = dendrites_with_mitos[[comparison, "Layer", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq", "Num_mitos_in_dendrite"]] .groupby([comparison, "Layer"]).describe().T
+
+# Save the summary stats as a CSV file in case we need to look at that later
+den_stats_before_sub.to_csv(os.path.join(dirName, str("Dendrite_stats_before_sub.csv")))
+den_stats_sub.to_csv(os.path.join(dirName, str("Dendrite_stats_after_sub.csv")))
+
+# We need to pull the mitos from the mito_data that match the mitos in dendrites_with_mitos
+
+# Create a tile ID that includes the subregion, in case there are tiles with the same tile name in both subregions
+dendrites_with_mitos["Tile_ID"] = dendrites_with_mitos["Subregion"] + "_" + dendrites_with_mitos["Tile"]
 
 # get the IDs of the dendrites in each tile that have at least 1 mito so we can associate them with their children mitochondria in mito_data
-den_IDs = dendrites_with_mitos_CTL[["Tile", "Object ID", "Num_mitos_in_dendrite"]]
+den_IDs = dendrites_with_mitos[["Tile_ID", "Object ID", "Num_mitos_in_dendrite"]]
 
-# For each tile, get list of dendrite IDs and a sum of how many mitos in dendrites in that tile. These are only dendrites with mitos in CTL animals.
-tile_list = dendrites_with_mitos_CTL["Tile"].unique()
+# For each tile, get list of dendrite IDs and a sum of how many mitos in dendrites in that tile.
+tile_list = dendrites_with_mitos["Tile_ID"].unique()
 tile_den_mito_df = pd.DataFrame(index = tile_list)
 
-tile_den_mito_df["Den_ID_list"] = [list(den_IDs[den_IDs["Tile"] == x]["Object ID"]) for x in tile_list]
+tile_den_mito_df["Den_ID_list"] = [list(den_IDs[den_IDs["Tile_ID"] == x]["Object ID"]) for x in tile_list]
 
 tile_den_mito_df["Num_den_with_mitos"] = [len(x) for x in tile_den_mito_df["Den_ID_list"]]
-tile_den_mito_df["total_mitos_in_dendrites"] = [int(sum(den_IDs[den_IDs["Tile"] == x]["Num_mitos_in_dendrite"])) for x in tile_list]
+tile_den_mito_df["total_mitos_in_dendrites"] = [int(sum(den_IDs[den_IDs["Tile_ID"] == x]["Num_mitos_in_dendrite"])) for x in tile_list]
 
+#!!! Where I left off editing, make sure this section runs smoothly and clean up anything unnecessary
 # Use the list of dendrite IDs to find the same parent IDs in the mito dataframe for each dendrite
 
 # will house dendrite level data for dendrites that have mitos
@@ -365,10 +348,10 @@ for tile in tile_list:
     # list of dendrite IDs for the current tile
     den_IDs = tile_den_mito_df.loc[tile]["Den_ID_list"]
     
-    den_curr_tile = dendrites_with_mitos_CTL[dendrites_with_mitos_CTL["Tile"] == tile]
+    den_curr_tile = dendrites_with_mitos[dendrites_with_mitos["Tile_ID"] == tile]
     
     # get all the mito_data for the current tile
-    mitos_curr_tile = mito_data[mito_data["Tile"] == tile]
+    mitos_curr_tile = mito_data[mito_data["Tile_ID"] == tile]
     
     # For each dendrite, grab the mito IDs, the mito count (for confirmation) and the avg mito area and range
     for den in den_IDs:
