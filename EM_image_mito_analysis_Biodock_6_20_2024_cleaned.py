@@ -229,12 +229,12 @@ mito_avgs = mito_avgs.rename(columns = {"Tile": "Count"})
 # get total mito area per tile
 mito_avgs["Total_mito_Area_um_sq"] = mito_data[["Tile", "Area_um_sq"]].groupby("Tile").sum()
 
-# Round the data in mito_avgs to 3 decimil points
+# Round the data in mito_avgs to 3 decimal points
 mito_avgs = round(mito_avgs, 2)
 mito_avgs.Layer = pd.Categorical(mito_avgs.Layer, categories=sorter, ordered=True) # make sure Layer is categorical
 
 # Let's flag any tiles where the count is under 2. This likely means the tile is not useable or something is wrong with the tile image.
-flagged = mito_avgs["Count"].where(mito_avgs["Count"] <= 2).dropna(how="all") # get any tiles where count is 5 or less
+flagged = mito_avgs["Count"].where(mito_avgs["Count"] <= 2).dropna(how="all") # get any tiles where count is 2 or less
 num_flag = len(flagged)
 
 # print a warning if there are any flagged tiles
@@ -256,7 +256,7 @@ print("\nNormalizing the data to the control average (cre -)...")
 # Empty dataframe for the normalized data
 norm_to_ctrl = pd.DataFrame(columns = ["Object ID", "Animal", "Stub", "Tile", "Layer", "Genotype", "Norm_Area", "Norm_Diam", "Norm_Aspect", "Norm_Dist"])
 
-# First we need to get the WT mean of all the data for each metric. This is what we will used as the normalization factor. 
+# First we need to get the mean of all the CTL data for each metric. This is what we will used as the normalization factor. 
 
 # Get the CTL data only
 WT_data = mito_data[mito_data["Genotype"] == "MCC Cre -"]
