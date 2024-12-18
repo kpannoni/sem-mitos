@@ -2,19 +2,18 @@
 """
 Created on 9.1.2023
 
-Custom code to work with the object data exported from Biodock, an AI based image analysis platform. Mitochondria were segmented in 6144x4096 pixel SBFEM tiles from the basal, proximal and distal dendrits of CA2 and CA1 of WT and MCU KO mice. The biodock output includes a row for each segmented object in the SEM images along with metrics such as area, X and Y position, length of major and minor axes, perimiter, etc. The file structure in Biodock should be a folder for CTL and cKO, with a subfolder for each layer, then a subfolder for each animal analyzed and each section. This is important, because this code will be getting a lot of the metadata information from the folder names (ie. dendritic layer, animal name, genotype).
+Custom code to work with the object data exported from Biodock, an AI based image analysis platform. Mitochondria were segmented in 6144x4096 pixel SBFEM tiles from the basal, proximal and distal dendrits of CA2 and CA1 of WT and MCU KO mice. The biodock output includes a row for each segmented object in the SEM images along with metrics such as area, X and Y position, length of major and minor axes, perimiter, etc. The file structure in Biodock should be a folder for CTL and cKO, with a subfolder for each layer, then a subfolder for each animal analyzed and each section. This is important, because this code will be getting a lot of the metadata information from the folder names (ie. dendritic layer, animal name, genotype). If you want to compare CA1 and CA2, make sure you have a combined CSV file with both CA1 and CA2 together and add a column for "Subregion" that says either CA1 or CA2 for each row.
 
-The code will convert any lengths or areas from pixels to microns, apply a size filter, then calculate aspect ratio and the distance to nearest neighbor for each segmented mitochondria object. The total number of mitochondria and the total mitochondria area per 100 um2 will be calculated for each image. Any image tiles containing less than 2 mitochondria will be flagged and removed. The data of interest (area, Feret's diameter, perimeter, distance to nearest neighbor and count) will be normalized to the average of the control. 
-                                                                                                                                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                                                                                                                                        The custom function WT_KO_Violin() from "mito_functions.py" is used to plot each metric with violin plots (or box plots) and run a two way ANOVA comparing the effect of genotype and layer. Make sure you have mito_functions.py in your working directory along with this code. 
+The code will convert any lengths or areas from pixels to microns, apply a size filter, then calculate aspect ratio and the distance to nearest neighbor for each segmented mitochondria object. The total number of mitochondria and the total mitochondria area per 100 um2 will be calculated for each image. Any image tiles containing less than 2 mitochondria will be flagged and removed. 
 
-Input: The CSV file exported from Biodock's analysis. User will be prompted to select this file.
+This code will filter the data to include only mitochondria that have an associated segmented dendrite and remove dendrites too small as likely spine heads (< 0.04 um2 in area), or too wide as primary dendrites (> 1.9 um in width). The mitochondria areas will then be normalized to the parent dendrite's area and mitochondria Feret's diameter will be normalized to the Feret's diameter of the parent dendrite.
+                                                                                                                                                                                                                                                                                                                                                                                                                        The custom function WT_KO_Violin() from "mito_functions.py" is used to plot metrics of interest with violin plots (or box plots) comparing CA1 and CA2 across dendritic layers. Make sure you have mito_functions.py in your working directory along with this code. 
+
+Input: The CSV file exported from Biodock's analysis. User will be prompted to select this file. This file should contain the CA1 and CA2 individual mitochondria and dendrite objects and a column added for "Subregion". Note that you may have to combine the data and add the Subregion column manually.
     
 Output: CSV files with the individual data, tile data, section data and animal data. There will be an output folder within the main output directory for the violin plots and stats, with a separate folder specifically for figure plots. There will also be a folder with CSV files formated for easy import and plotting in Prism, if desired. Finally, an analysis summary CSV file will be saved in the main output directory with some general information about the analysis.
 
-BEFORE RUNNING THIS CODE: Set the name of the output directory you want, make sure the metadata information in this code is accurate, particularly the Biodock AI version used and the dataset analyzed. If those things change, you will have to update them manually in the code. They will be marked with an #!!! (like this line here).
-
-6.20.24  This version of the code was cleaned up and edited to be published on GitHub along side the preprint of the manuscript.
+BEFORE RUNNING THIS CODE: Set the name of the output directory you want, make sure the metadata information in this code is accurate, particularly the Biodock AI version used and the dataset analyzed. Make sure you have a CSV file that combines CA1 and CA2 together with a column for "Subregion". Also make sure you have the python file "mito_functions.py" in your working directory.
 
 @author: pannoni
 """
@@ -42,7 +41,7 @@ mito_data = pd.read_csv(data_loc)
 
 #Create a new folder in the working directory to save all the output files for this code. 
 #!!! Set the name of the output folder where the data and plots will be saved here.
-dirName = "SEM_mitos_CA2_Biodock_V6_6_20_24"
+dirName = "SEM_mitos_CA1_CA2_comp_norm_dendrites_12_17_24"
  
 try:
     # Create target Directory
@@ -57,7 +56,7 @@ except FileExistsError:
 AI_name = "Mitochondria in MCU KO and WT mice (V6)"
 
 #!!! Dataset that the images are from:
-dataset = "CTL and KO CA2"
+dataset = "CTL CA2 and CA1"
 
 # Set the tile size for the metadata
 tile_size = "6144 x 4969 pixels"
@@ -65,8 +64,11 @@ tile_size = "6144 x 4969 pixels"
 # Tile sampling
 sampling = "Every 8th tile"
 
+#!!! Set the main comparison you want to make below, either Subregion or Genotype. Use "Subregion" if you want to compare across CA1 and CA2 in your dataset. Set "Genotype" if you want to compare across genotypes. You can always run the code twice if you want to make both comparisons.
+comparison ="Subregion"
+
 #!!! Space to put notes about the dataset or any changes made since a previous run.
-notes = "Analysis of CTL and MCU KO data in CA2 using version 6 of the Biodock AI. Denderitic mitochondria and dendrites were segmented with a confidence threshold of 0.4. This dataset was used for Figure 4 and supplemental figures 2-4."
+notes = "Analysis of CTL mitochondria and dendrites in CA2 and CA1 using version 6 of the Biodock AI, focusing on mitochondria within dendrites and controling for dendrite plane. Denderitic mitochondria and dendrites were segmented with a confidence threshold of 0.4. Dendrites were filtered to remove spine heads (< 0.4 area) and primary dendrites (> 1.9 width)."
     
 # Parse out the image metadata from the CSV file by breaking the "image origin" column into its separate folders
 
@@ -79,12 +81,16 @@ if len(mito_data["Image origin"][1].split("/")) == 5: # check that there are the
     mito_data["Tile"] = [x.split("/")[4] for x in mito_data["Image origin"]] # image file name
 else:
     print("Error: Can't get metadata information from the Biodock output file. Please make sure this information is included in the 'Image origin' column of your file. The Image origin should include the genotype, layer, animal, stub or section, then the image tile associated each object. It should be in that order, separated by /. If the image file structure in biodock is set up as described, it should be exported that way. If not, you will have to fix it and run the code again.")
+    
+# Check for a "Subregion" column and throw an error if there isn't one in the CSV file
+if "Subregion" not in mito_data.columns:
+    print("Error: Can't find the subregion information from the Biodock output file. Please make sure there is a column for 'Subregion' in your CSV data file and run the code again. You may have to manually add this column.")
 
 # Make the layer column into category so we can sort them in the order we want (Basal, Prox, Distal)
 sorter = ["Basal", "Proximal", "Distal"] # sorting list
 # Set the Layer column to be a "category" type that we can sort by
 mito_data.Layer = pd.Categorical(mito_data.Layer, categories=sorter, ordered=True)
-mito_data = mito_data.sort_values(['Genotype', 'Layer', 'Animal', "Stub"], ascending = [False, True, True, True]).reset_index(drop=True) # sort
+mito_data = mito_data.sort_values(['Subregion', 'Layer', 'Animal', "Stub"], ascending = [False, True, True, True]).reset_index(drop=True) # sort
 
 # Change "object ID" to string so it won't be treated as numerical
 mito_data["Object ID"] = mito_data["Object ID"].astype("int").astype("str")
@@ -124,9 +130,13 @@ dendrite_data["Den_Length_um"] = dendrite_data["Feret Diameter Maximum"] * scale
 
 print("\nRemoving mitochondria larger than 2 microns squared or smaller than 0.01 microns squared...")
 
-total_mitos = len(mito_data)
+total_mitos = len(mito_data) # total mitos before filtering
 
-# Let's remove any mitos below a size of 0.1 um2, or larger than 2um2
+# Capture the mitos to be removed for size exclusion, if you want to look at them
+mitos_removed_small = mito_data.query('0.01 > Area_um_sq').reset_index(drop=True)
+mitos_removed_large = mito_data.query('Area_um_sq > 2.1').reset_index(drop=True)
+
+# Now let's remove the mitos below a size of 0.1 um2, or larger than 2um2
 mito_data = mito_data.query('0.01 < Area_um_sq < 2.1').reset_index(drop=True)
 
 mitos_removed = total_mitos - len(mito_data)
@@ -137,17 +147,31 @@ else:
     print("No mitochondria removed from size exclusion.")
     
 # Let's remove any dendrite segments below a size of 0.02 um2 (~5000 px), these are likely spine heads and not actually dendrites
-print("\nRemoving dendrites smaller than 0.4 microns squared since these are likely spine heads...")
+print("\nRemoving dendrites smaller than 0.4 microns squared since these are likely spine heads and primary dendrites wider than 1.9 microns...")
 # get the current number of dendrites
 total_dendrites = len(dendrite_data)
 dendrite_data = dendrite_data.query('Den_Area_um_sq > 0.4').reset_index(drop=True)
 # Get the number of dendrites that were removed, if any
-den_removed = total_dendrites - len(dendrite_data)
+den_removed_spines = total_dendrites - len(dendrite_data)
 
-if den_removed > 0:
-    print(" ", den_removed, " dendrites removed as likely spine heads.")
+#!!! Add another filter here to remove the primary dendrite
+# first make a new df for the primary dendrites
+# dendrites_primary = []
+dendrites_primary = dendrite_data.query("Den_Width_um > 1.9").reset_index(drop=True)
+# Now filter out the primary dendrites from the original dataframe 
+dendrite_data = dendrite_data.query("Den_Width_um < 1.9").reset_index(drop=True)
+# Get the number of dendrites that were removed as primary dendrites, if any
+den_removed_primaries = den_removed_spines - len(dendrite_data)
+
+if den_removed_spines > 0:
+    print(" ", den_removed_spines, " dendrites removed as likely spine heads.")
 else:
-    print("No dendrite segments were removed.")
+    print("No dendrite spine heads were removed.")
+    
+if den_removed_primaries > 0:
+    print(" ", den_removed_primaries, " primary dendrites removed.")
+else:
+    print("No primary dendrites were removed.")
 
 print("\nCalculating the mitochondria aspect ratio...")
 # Calculate the aspect ratio using the major and minor axes, although we will probably just use the length of the major axes instead
@@ -176,6 +200,9 @@ for tile in list(set(mito_data["Tile"])): # loop across each image
     mito_coor = list(tile_data["Location"])
     mito_IDs = list(tile_data["Object ID"].astype("int"))
     
+    # get the current subregion
+    curr_subregion = tile_data["Subregion"].unique()[0]
+    
     if len(tile_data) > 1: # if there's more than one mitochondria in the tile
         
         # Create a KD tree to locate nearest neighbors
@@ -203,7 +230,7 @@ for tile in list(set(mito_data["Tile"])): # loop across each image
         # Add the nearest neighbor data to the original mito_data dataframe in the correct location
         tile_list.append(tile_data)
     else:
-        print("\nTile '" + str(tile) + "' has only one mitochondria. Nearest neighbor analysis cannot be done on this tile.\nThis tile should likely be removed from the analysis.")
+        print("\nTile '" + str(tile) + f"' in {curr_subregion} has only one mitochondria. Nearest neighbor analysis cannot be done on this tile.\nThis tile should likely be removed from the analysis.")
     
 # combine the tile data back into the original dataframe
 mito_data = pd.concat(tile_list).sort_index()
@@ -218,9 +245,11 @@ mito_data["NN_Dist_um"] = mito_data["NN_Dist"] * scale_um_per_px
 
 print("\nGetting the number and total area of mitochondria and dendrites in each tile...")
 
+#!!! Stopped edits here. Here we probably want to group by subregion instead of genotype.
+
 # group the mito data by tile to get averages for the metrics
 mito_avgs = mito_data.groupby("Tile").mean(numeric_only=True) # get the tile averages
-meta_cols = mito_data.groupby("Tile").agg({"Animal": "first", "Genotype": "first", "Layer": "first", "Stub": "first", "Section_ID": "first", "Tile": "count"}) # keep the metadata and count the number of objects (mitochondria) for each tile
+meta_cols = mito_data.groupby("Tile").agg({"Animal": "first", "Subregion": "first", "Genotype": "first", "Layer": "first", "Stub": "first", "Section_ID": "first", "Tile": "count"}) # keep the metadata and count the number of objects (mitochondria) for each tile
 mito_avgs = meta_cols.join(mito_avgs) # join the averaged data with the metadata columns + count
 
 # Rename the tile column to "count" 
@@ -304,7 +333,270 @@ num_mito_per_den_counts = num_mito_per_den_counts.rename_axis("Mitochondria per 
 
 num_mito_per_den_counts.to_csv((os.path.join(dirName, str("mito_number_per_den_value_counts_CTL.csv"))), na_rep='NaN')
 
+# Only in CTL animals, we want to look at dendrite length in each layer for each stub, so we can correlate this with mito area
+
+dendrites_with_mitos_CTL = dendrites_with_mitos[dendrites_with_mitos["Genotype"] == "MCC Cre -"]
+
+CTL_dendrite_stats_by_stub = dendrites_with_mitos_CTL[["Animal", "Stub", "Layer", "Num_mitos_in_dendrite", "Den_Length_um", "Den_Width_um", "Mitos_per_den_length"]].groupby(["Animal","Stub", "Layer"], observed=True).agg(["mean", "median", "std", "count"])
+
+# We need to pull the mitos from the mito_data that match the mitos in den_with_mitos_CTL
+
+# get the IDs of the dendrites in each tile that have at least 1 mito so we can associate them with their children mitochondria in mito_data
+den_IDs = dendrites_with_mitos_CTL[["Tile", "Object ID", "Num_mitos_in_dendrite"]]
+
+# For each tile, get list of dendrite IDs and a sum of how many mitos in dendrites in that tile. These are only dendrites with mitos in CTL animals.
+tile_list = dendrites_with_mitos_CTL["Tile"].unique()
+tile_den_mito_df = pd.DataFrame(index = tile_list)
+
+tile_den_mito_df["Den_ID_list"] = [list(den_IDs[den_IDs["Tile"] == x]["Object ID"]) for x in tile_list]
+
+tile_den_mito_df["Num_den_with_mitos"] = [len(x) for x in tile_den_mito_df["Den_ID_list"]]
+tile_den_mito_df["total_mitos_in_dendrites"] = [int(sum(den_IDs[den_IDs["Tile"] == x]["Num_mitos_in_dendrite"])) for x in tile_list]
+
+# Use the list of dendrite IDs to find the same parent IDs in the mito dataframe for each dendrite
+
+# will house dendrite level data for dendrites that have mitos
+den_with_mitos_df = pd.DataFrame()
+
+# will house the individual mito data for only mitos that have parent dendrites
+mitos_with_den_df = pd.DataFrame()
+
+for tile in tile_list:
+    # list of dendrite IDs for the current tile
+    den_IDs = tile_den_mito_df.loc[tile]["Den_ID_list"]
     
+    den_curr_tile = dendrites_with_mitos_CTL[dendrites_with_mitos_CTL["Tile"] == tile]
+    
+    # get all the mito_data for the current tile
+    mitos_curr_tile = mito_data[mito_data["Tile"] == tile]
+    
+    # For each dendrite, grab the mito IDs, the mito count (for confirmation) and the avg mito area and range
+    for den in den_IDs:
+        # Get the mitos in the current dendrite
+        mitos_curr_den = mitos_curr_tile[pd.to_numeric(mitos_curr_tile["Dendrite Object parent ID"], errors='coerce') == float(den)].reset_index(drop=True).rename(columns={"Object ID":"Mito_ID"}) # will rename the mito "Object ID" to "Mito_ID"
+        
+        # Make sure to filter for mitos that have a parent dendrite
+        if len(mitos_curr_den) > 0:
+            # Grab dendrite ID, area and length of the current dendrite
+            
+            # Get the number of mitos in the current dendrite
+            num_curr_mitos = len(mitos_curr_den)
+            
+            # Get the lengh and area of the current dendrite which will apply to each mito
+            mitos_curr_den["Den_Area_um_sq"] = list(den_curr_tile[den_curr_tile["Object ID"] == den]["Den_Area_um_sq"]) * num_curr_mitos
+            mitos_curr_den["Den_Length_um"] = list(den_curr_tile[den_curr_tile["Object ID"] == den]["Den_Length_um"]) * num_curr_mitos
+            mitos_curr_den["Den_Width_um"] = list(den_curr_tile[den_curr_tile["Object ID"] == den]["Den_Width_um"]) * num_curr_mitos
+            mitos_curr_den["Dendrite_ID"] = [den] * num_curr_mitos
+        
+            # Add to the mitos_with_den_df
+            mitos_with_den_df = pd.concat([mitos_with_den_df, mitos_curr_den], axis=0)
+        
+            # Now get some data for the dendrite level dataframe
+            # list the mito object IDs
+            curr_mito_IDs = list(mitos_curr_den["Mito_ID"])
+        
+            # Get the average mito area for this dendrite
+            curr_mito_area = mitos_curr_den["Area_um_sq"].mean()
+        
+            # Get the average mito diameter for this dendrite
+            curr_mito_area = mitos_curr_den["Area_um_sq"].mean()
+        
+            # Get the sum of dendrite area 
+            curr_total_mito_area = mitos_curr_den["Area_um_sq"].sum()
+        
+        # put this together into a temp series with all the data for the current dendrite
+            den_meta = den_curr_tile[den_curr_tile["Object ID"] == den][["Object ID", "Animal", "Layer", "Stub", "Tile", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq"]].reset_index(drop=True)
+            # temp dataframe for the new dendrite level data
+            temp_den_data = pd.DataFrame({"Dendrite_ID":den, "Mito_IDs": [curr_mito_IDs], "Mean_mito_area":curr_mito_area, "Mito_total_area":curr_total_mito_area, "N_mitos": num_curr_mitos})
+            # combine the two dataframes
+            temp_den_data = pd.concat([den_meta, temp_den_data], axis=1)
+        
+            # Add to the den_with_mitos_df
+            den_with_mitos_df = pd.concat([den_with_mitos_df, temp_den_data], axis=0)
+        
+# Get total mito area divided by dendrite area for the dendrite df
+den_with_mitos_df["Total_mito_area_per_den_area"] = den_with_mitos_df["Mito_total_area"] / den_with_mitos_df["Den_Area_um_sq"]
+
+# Using the mito data, normalize mito length by dendrite length
+mitos_with_den_df["Mito_len_per_den_len"] = mitos_with_den_df["Feret_diam_um"] / mitos_with_den_df["Den_Length_um"]
+
+# Using the mito data, normalize mito area by dendrite area
+mitos_with_den_df["Mito_area_per_den_area"] = mitos_with_den_df["Area_um_sq"] / mitos_with_den_df["Den_Area_um_sq"]
+
+# Save the mitos_with_den_df as a csv file
+mitos_with_den_df.to_csv(os.path.join(dirName, str("Mitos_with_parent_dendrites_df.csv")), index=False)
+
+# Save the den_with_mitos_df as a csv file
+den_with_mitos_df.to_csv(os.path.join(dirName, str("Dendrites_with_mitos_df.csv")), index=False)
+
+# For the dendrite data, get a grouped dataframe as well
+den_with_mitos_df_animal = den_with_mitos_df[["Animal", "Layer", "Mito_total_area", "Den_Width_um", "Den_Length_um", "Den_Area_um_sq", "Total_mito_area_per_den_area"]].groupby(["Animal", "Layer"]).agg(["median", "std", "count"]).T
+# Save the den_with_mitos_df as a csv file
+den_with_mitos_df_animal.to_csv(os.path.join(dirName, str("Dendrites_with_mitos_df_animal.csv")))
+
+# Summary dataframe grouped by Layer
+den_with_mitos_df_layer = den_with_mitos_df[["Animal", "Layer", "Mito_total_area", "Den_Width_um", "Den_Length_um", "Den_Area_um_sq", "Total_mito_area_per_den_area"]].groupby(["Layer"]).agg(["mean", "median", "std", "count"]).T
+
+# Save the den_with_mitos_df as a csv file
+den_with_mitos_df_layer.to_csv(os.path.join(dirName, str("Dendrites_with_mitos_df_layer.csv")))
+
+# Subset the mito data to have mito area with and without normalization to the dendrites
+mito_norm_den_animal_df = mitos_with_den_df[["Animal", "Layer", "Area_um_sq", "Mito_area_per_den_area", "Feret_diam_um", "Mito_len_per_den_len", "Den_Area_um_sq", "Den_Length_um"]].groupby(["Animal", "Layer"]).median()
+
+# Save as a csv file
+mito_norm_den_animal_df.to_csv(os.path.join(dirName, str("Norm_mito_data_by_dendrites.csv")))
+
+# Export for Prism
+# For Area, we want mito area (not norm) and mito area norm as columns and the layers as rows
+mito_results_prism = mitos_with_den_df[["Layer", "Area_um_sq", "Mito_area_per_den_area", "Feret_diam_um", "Mito_len_per_den_len", "Den_Area_um_sq", "Den_Length_um"]].groupby(["Layer"]).agg(["median", "std", "count"])
+
+# We also want to export the animal level data for Prism to run some stats
+mito_area_norm_trans = prism_format(data = mito_norm_den_animal_df.reset_index(), data_col = "Mito_area_per_den_area", col="Layer", row= "Animal", file_path = os.path.join(dirName, str("Prism_Trans_Med_Norm_Mito_Area.csv")))
+
+# Same prism file for the normalized mito Ferets
+mito_Feret_norm_trans = prism_format(data = mito_norm_den_animal_df.reset_index(), data_col = "Mito_len_per_den_len", col="Layer", row= "Animal", file_path = os.path.join(dirName, str("Prism_Trans_Med_Norm_Mito_Feret.csv")))
+
+# Save as a csv file
+mito_results_prism.to_csv(os.path.join(dirName, str("Prism_format_mitos_with_dendrites.csv")))
+
+SO_mito_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Basal"]["Area_um_sq"].reset_index(drop=True)
+SR_mito_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Proximal"]["Area_um_sq"].reset_index(drop=True)
+SLM_mito_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Distal"]["Area_um_sq"].reset_index(drop=True)
+
+mito_area_prism = pd.DataFrame({"SO": SO_mito_area, "SR": SR_mito_area, "SLM":SLM_mito_area})
+
+# save it as CSV
+mito_area_prism.to_csv(os.path.join(dirName, str("Prism_mito_area_layer.csv")))
+
+# Now get the same for mito area normalized to dendrite area
+
+SO_norm_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Basal"]["Mito_area_per_den_area"].reset_index(drop=True)
+SR_norm_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Proximal"]["Mito_area_per_den_area"].reset_index(drop=True)
+SLM_norm_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Distal"]["Mito_area_per_den_area"].reset_index(drop=True)
+
+norm_area_prism = pd.DataFrame({"SO": SO_norm_area, "SR": SR_norm_area, "SLM":SLM_norm_area})
+
+# save it as CSV
+norm_area_prism.to_csv(os.path.join(dirName, str("Prism_norm_area_layer.csv")))
+
+# Now get the same for mito Feret's diam
+
+SO_mito_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Basal"]["Feret_diam_um"].reset_index(drop=True)
+SR_mito_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Proximal"]["Feret_diam_um"].reset_index(drop=True)
+SLM_mito_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Distal"]["Feret_diam_um"].reset_index(drop=True)
+
+mito_feret_prism = pd.DataFrame({"SO": SO_mito_feret, "SR": SR_mito_feret, "SLM":SLM_mito_feret})
+
+# save it as CSV
+mito_feret_prism.to_csv(os.path.join(dirName, str("Prism_mito_feret_layer.csv")))
+
+# Same thing for mito feret's normalized to dendrite feret's
+
+SO_norm_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Basal"]["Mito_len_per_den_len"].reset_index(drop=True)
+SR_norm_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Proximal"]["Mito_len_per_den_len"].reset_index(drop=True)
+SLM_norm_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Distal"]["Mito_len_per_den_len"].reset_index(drop=True)
+
+norm_feret_prism = pd.DataFrame({"SO": SO_norm_feret, "SR": SR_norm_feret, "SLM":SLM_norm_feret})
+
+# save it as CSV
+norm_feret_prism.to_csv(os.path.join(dirName, str("Prism_norm_feret_layer.csv")))
+
+#%%% Now, we want to use dendrite width to pick out and exclude primary dendrites (in SR). Note that there shouldn't be hardly any dendrites removed in the other layers.
+
+# first let's look at the distribution of dendrite width to find the population of primary dendrites
+
+stats_CTL_den_width = get_stats_summary(data = den_with_mitos_df, data_col = "Den_Width_um", x_label = "Dendrite Width (um)", save_dir = dirName, group_name = "CTL", binsize = 0.05, hist_comp = "proportion", figsize = (8,5), xlim = [0,3], ylim = [0,0.1])
+
+# Looks like 2um might be a good conservative cut off to remove large primary dendrites in SR without removing dendrites in the other layers, but let's test that
+
+# Let's make a list of cutoff to try and then plot how the number of primary dendrites changes in each layer
+
+cutoff_list = np.arange(1.7, 2.4, 0.1)
+
+# empty dataframe for the primary dendrite counts
+
+primary_counts = pd.DataFrame()
+
+for cutoff in cutoff_list:
+
+    dendrites_subset = den_with_mitos_df.query(f"Den_Width_um <= {cutoff}")
+    primary_den = den_with_mitos_df.query(f"Den_Width_um > {cutoff}")
+
+    # print(f"\nTotal CTL Dendrites:  {len(dendrites_with_mitos_CTL)}")
+    # print(f"Primary Dendrites:  {len(primary_den)}")
+    # print(f"Non-Primary Dendrites:  {len(dendrites_no_primary)}\n")
+
+    # Check primary dendrites by layer
+    primary_by_layer = primary_den.groupby("Layer").count()["Object ID"]
+
+    # Let's add to a dataframe for plotting later
+    primary_counts[f"Cut_{round(cutoff,1)}"] = primary_by_layer
+    
+# Now let's make a cool line plot to show the change in each layer
+fig, ax = plt.subplots(figsize=(6,6))
+sns.lineplot(data = primary_counts, palette="Blues_d")
+
+ax.set_title("Number of dendrites excluded\n at different dendrite width cutoffs", fontsize=22, y = 1.05)
+
+ax.set_xlabel(None)
+ax.set_ylabel("Dendrite Count", fontsize=18, fontweight="bold")
+ax.tick_params(axis='both', labelsize=18)
+
+# I actually think the cutoff that works best is 1.9 um in width
+# Note that the data was already filtered previously, so this dendrites_primary variable should be 0. Later I might move this up to the filter stage to capture the dendrites that were removed
+
+# Do a quick histogram comparing all the dendrites (CTL, with mitos) to the dendrites with the cutoff
+
+# plot the CTL histogram of dendrite width by layer
+stats_CTL_den_width_no_prim = get_stats_summary(data = den_with_mitos_df, data_col = "Den_Width_um", x_label = "Dendrite Width (um)", save_dir = dirName, group_name = "CTL no primaries", binsize = 0.05, hist_comp = "proportion", figsize = (8,5), xlim = [0,3], ylim = [0,0.1])
+
+# We need to confirm by spot check that the excluded dendrites look like Primary dendrites
+
+# Randomly pick 10 proximal dendrites from dendrites primary to spot check
+
+if len(dendrites_primary) > 0: # this will be skipped now because we already decided on a cutoff and filtered out the primary dendrites
+
+    proximal_primary_den = dendrites_primary[dendrites_primary["Layer"] == "Proximal"][["Tile", "Object ID", "Layer", 'Den_Width_um']].reset_index(drop=True)
+    
+    primary_den_rand = list(np.random.choice(proximal_primary_den.index,10))
+    
+    # grab the data to spot check
+    primary_den_spotcheck = proximal_primary_den.loc[primary_den_rand]
+    
+    # Also used the above to check 10 random distal and 10 random basal dendrites above 2um width
+    # I think we should stick with 1.9 as the cutoff
+
+
+#%%% We want to directly compare the full dataset to the mitos_in_den_df to see what effect the subsetting has
+
+mito_CTL_data = mito_data[mito_data["Genotype"] == "MCC Cre -"].copy()
+
+# Get summary stats for the full CTL dataset
+stats_CTL_data = mito_CTL_data[["Layer", "Area_um_sq", "Feret_diam_um"]].groupby("Layer").agg(["mean", "median", "count"])
+stats_CTL_den_sub = mitos_with_den_df[["Layer", "Area_um_sq", "Feret_diam_um", "Mito_area_per_den_area", "Mito_len_per_den_len"]].groupby("Layer").agg(["mean", "median", "count"])
+
+prop_lost_in_sub =  1- (stats_CTL_den_sub["Area_um_sq", "count"] / stats_CTL_data["Area_um_sq", "count"])
+
+compare_mito_area = pd.concat([stats_CTL_data["Area_um_sq"], stats_CTL_den_sub["Area_um_sq"]], axis=1)
+
+compare_mito_Ferets = pd.concat([stats_CTL_data["Feret_diam_um"], stats_CTL_den_sub["Feret_diam_um"]], axis=1)
+
+#!!! Get the population of mitos that was removed
+
+mito_data["Mito_ID"] = mito_data["Object ID"]
+if "Mito_ID" not in mito_CTL_data.columns:
+    mito_CTL_data["Mito_ID"] = mito_CTL_data["Object ID"]
+
+# Create a unique mito ID by combining tile and mito ID for both dataframes
+mito_CTL_data["Unique_Mito_ID"] = mito_CTL_data["Tile"] + "_" + mito_CTL_data["Mito_ID"]
+mitos_with_den_df["Unique_Mito_ID"] = mitos_with_den_df["Tile"] + "_" + mitos_with_den_df["Mito_ID"]
+
+diff_df = mito_CTL_data[~mito_CTL_data['Unique_Mito_ID'].isin(mitos_with_den_df['Unique_Mito_ID'])]
+
+diff_df_mito_area = diff_df[["Layer", "Area_um_sq"]].groupby("Layer").mean()
+
+
+
 #%%% Normalize the data of interest to the CTL average in a separate dataframe. This data will be used for figure plots in Figure 4 of the manuscript.
 
 print("\nNormalizing the data to the control average (cre -)...")
@@ -444,10 +736,19 @@ KO_data = mito_data[mito_data["Genotype"] == "MCC Cre +"]
 # plot histograms with the get_stats_summary() custom function
 
 # plot the CTL histogram by layer
-stats_CTL, norm_CTL = get_stats_summary(data = WT_data, data_col = "Area_um_sq", x_label = "Area (um2)", save_dir = dirName, group_name = "CTL", binsize = 0.01, hist_comp = "proportion", figsize = (8,5), xlim = [0,0.4], ylim = [0,0.1])
+stats_CTL, norm_CTL = get_stats_summary(data = WT_data, data_col = "Area_um_sq", x_label = "Area (um2)", save_dir = dirName, group_name = "CTL", binsize = 0.02, hist_comp = "proportion", figsize = (8,5), xlim = [0,0.8], ylim = [0,0.15])
 
 # similar histogram for the cKO
-stats_KO, norm_KO = get_stats_summary(data = KO_data, data_col = "Area_um_sq", x_label = "Area (um2)", save_dir = dirName, group_name = "cKO", binsize = 0.01, hist_comp = "proportion", figsize = (8,5), xlim = [0,0.4], ylim = [0,0.1])
+stats_KO, norm_KO = get_stats_summary(data = KO_data, data_col = "Area_um_sq", x_label = "Area (um2)", save_dir = dirName, group_name = "cKO", binsize = 0.02, hist_comp = "proportion", figsize = (8,5), xlim = [0,0.4], ylim = [0,0.15])
+
+# Get a similar histogram for the subsetted mito population with dendrites
+stats_CTL_sub, norm_CTL_sub = get_stats_summary(data = mitos_with_den_df, data_col = "Area_um_sq", x_label = "Area (um2)", save_dir = dirName, group_name = "CTL Sub", binsize = 0.02, hist_comp = "proportion", figsize = (8,5), xlim = [0,0.8], ylim = [0,0.15])
+
+# Histograms for Mito Ferets as well
+# plot the CTL histogram by layer
+stats_CTL_Feret, norm_CTL_feret = get_stats_summary(data = WT_data, data_col = "Feret_diam_um", x_label = "Feret's Diameter (um)", save_dir = dirName, group_name = "CTL", binsize = 0.05, hist_comp = "proportion", figsize = (8,5), xlim = [0,2], ylim = [0,0.1])
+
+stats_CTL_Feret_sub, norm_CTL_feret_sub = get_stats_summary(data = mitos_with_den_df, data_col = "Feret_diam_um", x_label = "Feret's Diameter (um)", save_dir = dirName, group_name = "CTL Sub", binsize = 0.05, hist_comp = "proportion", figsize = (8,5), xlim = [0,2], ylim = [0,0.1])
 
 # For mito area, get the summary stats for each layer from each animal
 area_summary_table = mito_data[["Area_um_sq", "Animal", "Layer"]].groupby(["Animal", "Layer"]).describe()
@@ -736,7 +1037,7 @@ stub_list = mito_data[["Animal", "Stub"]].drop_duplicates().reset_index(drop=Tru
 analyzed = str(num_animals) + " mice analyzed (" + str(num_stub) + ")"
 
 # explain any processing of the data by this code
-processing = "\n" + str(mitos_removed) + " mitochondria larger than 2.1 um2 or smaller than 0.01 um2 and " + str(den_removed) + " dendrite segments less than 0.4 um2 were removed.\nArea and diameter converted from pixels to micron squared.\n Count and mitochondrial mass were normalized to the total area analyzed. MCU KO data was normalized to the overal mean of the CTL."
+processing = "\n" + str(mitos_removed) + " mitochondria larger than 2.1 um2 or smaller than 0.01 um2, " + str(den_removed_spines) + " dendritic spine heads (< 0.4 um2 area), and " + str(den_removed_primaries) + " primary dendrites (> 1.9 um width) were removed.\nAll areas and diameters converted from pixels to micron squared.\n Count and mitochondrial mass were normalized to the total area analyzed. MCU KO data was normalized to the overal mean of the CTL. \n\n For mitochondria within segmented dendrites, mitochondria area was normalized to dendrite area and mitochondria Feret's diameter was normalized todendrite Feret's diameter of each mitochondria's parent dendrite."
 
 # Put together the metadata information for the text file
 meta_summary = {"Date": date.today().isoformat(), "Dataset":dataset, "Animals": animals, "Analyzed": analyzed, "Groups": groups_str, "Sampling": sampling, "Tile Size": tile_size, "N Tiles": total_analyzed, "Processing": processing, "Data CSV": data_loc.split("\\")[-1], "Biodock AI": AI_name, "Analysis Code": code_name}
