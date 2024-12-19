@@ -94,6 +94,8 @@ mito_data = mito_data.sort_values(['Subregion', 'Layer', 'Animal', "Stub"], asce
 
 # Change "object ID" to string so it won't be treated as numerical
 mito_data["Object ID"] = mito_data["Object ID"].astype("int").astype("str")
+# remove any spaces from the animal numbers
+mito_data["Animal"] = mito_data["Animal"].str.replace(' ', '')
     
 print("\nCSV file uploaded.")
 
@@ -294,7 +296,7 @@ num_mito_per_den_counts["Distal"] = dendrite_data[dendrite_data["Layer"] == "Dis
 num_mito_per_den_counts = num_mito_per_den_counts.sort_index(na_position='first')
 num_mito_per_den_counts = num_mito_per_den_counts.rename_axis("Mitochondria per Dendrite")
 
-num_mito_per_den_counts.to_csv((os.path.join(dirName, str("mito_number_per_den_value_counts_CTL.csv"))), na_rep='NaN')
+num_mito_per_den_counts.to_csv((os.path.join(dirName, str("mito_number_per_den_value_counts.csv"))), na_rep='NaN')
 
 # print out the frequencies:
 print("\n Frequency of mitochondria counts per dendrite segment in SR and SLM:\n\n", num_mito_per_den_counts)
@@ -318,10 +320,13 @@ den_stats_sub = dendrites_with_mitos[[comparison, "Layer", "Den_Length_um", "Den
 den_stats_before_sub.to_csv(os.path.join(dirName, str("Dendrite_stats_before_sub.csv")))
 den_stats_sub.to_csv(os.path.join(dirName, str("Dendrite_stats_after_sub.csv")))
 
+print("\nPulling the mitochondria data for just the mitochondria in dendrites...")
+
 # We need to pull the mitos from the mito_data that match the mitos in dendrites_with_mitos
 
 # Create a tile ID that includes the subregion, in case there are tiles with the same tile name in both subregions
 dendrites_with_mitos["Tile_ID"] = dendrites_with_mitos["Subregion"] + "_" + dendrites_with_mitos["Tile"]
+mito_data["Tile_ID"] = mito_data["Subregion"] + "_" + mito_data["Tile"]
 
 # get the IDs of the dendrites in each tile that have at least 1 mito so we can associate them with their children mitochondria in mito_data
 den_IDs = dendrites_with_mitos[["Tile_ID", "Object ID", "Num_mitos_in_dendrite"]]
@@ -388,7 +393,7 @@ for tile in tile_list:
             curr_total_mito_area = mitos_curr_den["Area_um_sq"].sum()
         
         # put this together into a temp series with all the data for the current dendrite
-            den_meta = den_curr_tile[den_curr_tile["Object ID"] == den][["Object ID", "Animal", "Layer", "Stub", "Tile", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq"]].reset_index(drop=True)
+            den_meta = den_curr_tile[den_curr_tile["Object ID"] == den][["Object ID", "Animal", "Subregion", "Layer", "Stub", "Tile", "Den_Length_um", "Den_Width_um", "Den_Area_um_sq"]].reset_index(drop=True)
             # temp dataframe for the new dendrite level data
             temp_den_data = pd.DataFrame({"Dendrite_ID":den, "Mito_IDs": [curr_mito_IDs], "Mean_mito_area":curr_mito_area, "Mito_total_area":curr_total_mito_area, "N_mitos": num_curr_mitos})
             # combine the two dataframes
@@ -396,6 +401,10 @@ for tile in tile_list:
         
             # Add to the den_with_mitos_df
             den_with_mitos_df = pd.concat([den_with_mitos_df, temp_den_data], axis=0)
+            
+print(" done.")
+
+print("\n Normalizing the mitochondria area and length by dendrite area or length...")
         
 # Get total mito area divided by dendrite area for the dendrite df
 den_with_mitos_df["Total_mito_area_per_den_area"] = den_with_mitos_df["Mito_total_area"] / den_with_mitos_df["Den_Area_um_sq"]
@@ -407,220 +416,58 @@ mitos_with_den_df["Mito_len_per_den_len"] = mitos_with_den_df["Feret_diam_um"] /
 mitos_with_den_df["Mito_area_per_den_area"] = mitos_with_den_df["Area_um_sq"] / mitos_with_den_df["Den_Area_um_sq"]
 
 # Save the mitos_with_den_df as a csv file
-mitos_with_den_df.to_csv(os.path.join(dirName, str("Mitos_with_parent_dendrites_df.csv")), index=False)
+norm_file1 = "Mitos_with_parent_dendrites_df.csv"
+mitos_with_den_df.to_csv(os.path.join(dirName, norm_file1), index=False)
 
 # Save the den_with_mitos_df as a csv file
 den_with_mitos_df.to_csv(os.path.join(dirName, str("Dendrites_with_mitos_df.csv")), index=False)
 
 # For the dendrite data, get a grouped dataframe as well
-den_with_mitos_df_animal = den_with_mitos_df[["Animal", "Layer", "Mito_total_area", "Den_Width_um", "Den_Length_um", "Den_Area_um_sq", "Total_mito_area_per_den_area"]].groupby(["Animal", "Layer"]).agg(["median", "std", "count"]).T
+den_with_mitos_df_animal = den_with_mitos_df[["Animal", comparison, "Layer", "Mito_total_area", "Den_Width_um", "Den_Length_um", "Den_Area_um_sq", "Total_mito_area_per_den_area"]].groupby(["Animal", comparison, "Layer"], observed=True).agg(["median", "std", "count"]).T
 # Save the den_with_mitos_df as a csv file
 den_with_mitos_df_animal.to_csv(os.path.join(dirName, str("Dendrites_with_mitos_df_animal.csv")))
 
 # Summary dataframe grouped by Layer
-den_with_mitos_df_layer = den_with_mitos_df[["Animal", "Layer", "Mito_total_area", "Den_Width_um", "Den_Length_um", "Den_Area_um_sq", "Total_mito_area_per_den_area"]].groupby(["Layer"]).agg(["mean", "median", "std", "count"]).T
+den_with_mitos_df_layer = den_with_mitos_df[[comparison, "Layer", "Mito_total_area", "Den_Width_um", "Den_Length_um", "Den_Area_um_sq", "Total_mito_area_per_den_area"]].groupby([comparison, "Layer"]).agg(["mean", "median", "std", "count"]).T
 
 # Save the den_with_mitos_df as a csv file
 den_with_mitos_df_layer.to_csv(os.path.join(dirName, str("Dendrites_with_mitos_df_layer.csv")))
 
 # Subset the mito data to have mito area with and without normalization to the dendrites
-mito_norm_den_animal_df = mitos_with_den_df[["Animal", "Layer", "Area_um_sq", "Mito_area_per_den_area", "Feret_diam_um", "Mito_len_per_den_len", "Den_Area_um_sq", "Den_Length_um"]].groupby(["Animal", "Layer"]).median()
+mito_norm_den_animal_df = mitos_with_den_df[["Animal", comparison, "Layer", "Area_um_sq", "Mito_area_per_den_area", "Feret_diam_um", "Mito_len_per_den_len", "Den_Area_um_sq", "Den_Length_um"]].groupby(["Animal", comparison, "Layer"]).median()
 
 # Save as a csv file
-mito_norm_den_animal_df.to_csv(os.path.join(dirName, str("Norm_mito_data_by_dendrites.csv")))
+norm_file2 = "Norm_mito_data_by_dendrites.csv"
+mito_norm_den_animal_df.to_csv(os.path.join(dirName, norm_file2))
 
-# Export for Prism
-# For Area, we want mito area (not norm) and mito area norm as columns and the layers as rows
-mito_results_prism = mitos_with_den_df[["Layer", "Area_um_sq", "Mito_area_per_den_area", "Feret_diam_um", "Mito_len_per_den_len", "Den_Area_um_sq", "Den_Length_um"]].groupby(["Layer"]).agg(["median", "std", "count"])
+print(f"\n The normalized mitochondria data by animal has been saved as: '{norm_file2}'. \nYou can find the full data for mitochondria in dendrites in the file: '{norm_file1}'\n")
 
-# We also want to export the animal level data for Prism to run some stats
-mito_area_norm_trans = prism_format(data = mito_norm_den_animal_df.reset_index(), data_col = "Mito_area_per_den_area", col="Layer", row= "Animal", file_path = os.path.join(dirName, str("Prism_Trans_Med_Norm_Mito_Area.csv")))
+# Save a few CSV summary files for export into Prism
+# Get the median, std and count for mito area, norm mito area, mito length norm mito length as well as dendrite area and dendrite length
+mito_norm_stats = mitos_with_den_df[["Layer", comparison, "Area_um_sq", "Mito_area_per_den_area", "Feret_diam_um", "Mito_len_per_den_len", "Den_Area_um_sq", "Den_Length_um"]].groupby([comparison, "Layer"]).agg(["median", "std", "count"])
+
+# Save as a csv file
+mito_norm_stats.to_csv(os.path.join(dirName, str("Summary_stats_norm_mitos_with_den.csv")))
+
+# First the non-normalized area and length
+
+mito_area_trans = prism_format(data = mito_norm_den_animal_df.reset_index(), data_col = "Area_um_sq", col="Layer", row= [comparison, "Animal"], file_path = os.path.join(dirName, str("Prism_Trans_Med_Mito_Area.csv")))
 
 # Same prism file for the normalized mito Ferets
-mito_Feret_norm_trans = prism_format(data = mito_norm_den_animal_df.reset_index(), data_col = "Mito_len_per_den_len", col="Layer", row= "Animal", file_path = os.path.join(dirName, str("Prism_Trans_Med_Norm_Mito_Feret.csv")))
+mito_Feret_trans = prism_format(data = mito_norm_den_animal_df.reset_index(), data_col = "Feret_diam_um", col="Layer", row= [comparison, "Animal"], file_path = os.path.join(dirName, str("Prism_Trans_Med_Mito_Feret.csv")))
 
-# Save as a csv file
-mito_results_prism.to_csv(os.path.join(dirName, str("Prism_format_mitos_with_dendrites.csv")))
+# Now the normalized area and length
 
-SO_mito_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Basal"]["Area_um_sq"].reset_index(drop=True)
-SR_mito_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Proximal"]["Area_um_sq"].reset_index(drop=True)
-SLM_mito_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Distal"]["Area_um_sq"].reset_index(drop=True)
+# We also want to export the animal level data for Prism to run some stats
+mito_area_norm_trans = prism_format(data = mito_norm_den_animal_df.reset_index(), data_col = "Mito_area_per_den_area", col="Layer", row= [comparison, "Animal"], file_path = os.path.join(dirName, str("Prism_Trans_Med_Norm_Mito_Area.csv")))
 
-mito_area_prism = pd.DataFrame({"SO": SO_mito_area, "SR": SR_mito_area, "SLM":SLM_mito_area})
-
-# save it as CSV
-mito_area_prism.to_csv(os.path.join(dirName, str("Prism_mito_area_layer.csv")))
-
-# Now get the same for mito area normalized to dendrite area
-
-SO_norm_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Basal"]["Mito_area_per_den_area"].reset_index(drop=True)
-SR_norm_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Proximal"]["Mito_area_per_den_area"].reset_index(drop=True)
-SLM_norm_area = mitos_with_den_df[mitos_with_den_df["Layer"] == "Distal"]["Mito_area_per_den_area"].reset_index(drop=True)
-
-norm_area_prism = pd.DataFrame({"SO": SO_norm_area, "SR": SR_norm_area, "SLM":SLM_norm_area})
-
-# save it as CSV
-norm_area_prism.to_csv(os.path.join(dirName, str("Prism_norm_area_layer.csv")))
-
-# Now get the same for mito Feret's diam
-
-SO_mito_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Basal"]["Feret_diam_um"].reset_index(drop=True)
-SR_mito_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Proximal"]["Feret_diam_um"].reset_index(drop=True)
-SLM_mito_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Distal"]["Feret_diam_um"].reset_index(drop=True)
-
-mito_feret_prism = pd.DataFrame({"SO": SO_mito_feret, "SR": SR_mito_feret, "SLM":SLM_mito_feret})
-
-# save it as CSV
-mito_feret_prism.to_csv(os.path.join(dirName, str("Prism_mito_feret_layer.csv")))
-
-# Same thing for mito feret's normalized to dendrite feret's
-
-SO_norm_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Basal"]["Mito_len_per_den_len"].reset_index(drop=True)
-SR_norm_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Proximal"]["Mito_len_per_den_len"].reset_index(drop=True)
-SLM_norm_feret = mitos_with_den_df[mitos_with_den_df["Layer"] == "Distal"]["Mito_len_per_den_len"].reset_index(drop=True)
-
-norm_feret_prism = pd.DataFrame({"SO": SO_norm_feret, "SR": SR_norm_feret, "SLM":SLM_norm_feret})
-
-# save it as CSV
-norm_feret_prism.to_csv(os.path.join(dirName, str("Prism_norm_feret_layer.csv")))
-
-#%%% Now, we want to use dendrite width to pick out and exclude primary dendrites (in SR). Note that there shouldn't be hardly any dendrites removed in the other layers.
-
-# first let's look at the distribution of dendrite width to find the population of primary dendrites
-
-stats_CTL_den_width = get_stats_summary(data = den_with_mitos_df, data_col = "Den_Width_um", x_label = "Dendrite Width (um)", save_dir = dirName, group_name = "CTL", binsize = 0.05, hist_comp = "proportion", figsize = (8,5), xlim = [0,3], ylim = [0,0.1])
-
-# Looks like 2um might be a good conservative cut off to remove large primary dendrites in SR without removing dendrites in the other layers, but let's test that
-
-# Let's make a list of cutoff to try and then plot how the number of primary dendrites changes in each layer
-
-cutoff_list = np.arange(1.7, 2.4, 0.1)
-
-# empty dataframe for the primary dendrite counts
-
-primary_counts = pd.DataFrame()
-
-for cutoff in cutoff_list:
-
-    dendrites_subset = den_with_mitos_df.query(f"Den_Width_um <= {cutoff}")
-    primary_den = den_with_mitos_df.query(f"Den_Width_um > {cutoff}")
-
-    # print(f"\nTotal CTL Dendrites:  {len(dendrites_with_mitos_CTL)}")
-    # print(f"Primary Dendrites:  {len(primary_den)}")
-    # print(f"Non-Primary Dendrites:  {len(dendrites_no_primary)}\n")
-
-    # Check primary dendrites by layer
-    primary_by_layer = primary_den.groupby("Layer").count()["Object ID"]
-
-    # Let's add to a dataframe for plotting later
-    primary_counts[f"Cut_{round(cutoff,1)}"] = primary_by_layer
-    
-# Now let's make a cool line plot to show the change in each layer
-fig, ax = plt.subplots(figsize=(6,6))
-sns.lineplot(data = primary_counts, palette="Blues_d")
-
-ax.set_title("Number of dendrites excluded\n at different dendrite width cutoffs", fontsize=22, y = 1.05)
-
-ax.set_xlabel(None)
-ax.set_ylabel("Dendrite Count", fontsize=18, fontweight="bold")
-ax.tick_params(axis='both', labelsize=18)
-
-# I actually think the cutoff that works best is 1.9 um in width
-# Note that the data was already filtered previously, so this dendrites_primary variable should be 0. Later I might move this up to the filter stage to capture the dendrites that were removed
-
-# Do a quick histogram comparing all the dendrites (CTL, with mitos) to the dendrites with the cutoff
-
-# plot the CTL histogram of dendrite width by layer
-stats_CTL_den_width_no_prim = get_stats_summary(data = den_with_mitos_df, data_col = "Den_Width_um", x_label = "Dendrite Width (um)", save_dir = dirName, group_name = "CTL no primaries", binsize = 0.05, hist_comp = "proportion", figsize = (8,5), xlim = [0,3], ylim = [0,0.1])
-
-# We need to confirm by spot check that the excluded dendrites look like Primary dendrites
-
-# Randomly pick 10 proximal dendrites from dendrites primary to spot check
-
-if len(dendrites_primary) > 0: # this will be skipped now because we already decided on a cutoff and filtered out the primary dendrites
-
-    proximal_primary_den = dendrites_primary[dendrites_primary["Layer"] == "Proximal"][["Tile", "Object ID", "Layer", 'Den_Width_um']].reset_index(drop=True)
-    
-    primary_den_rand = list(np.random.choice(proximal_primary_den.index,10))
-    
-    # grab the data to spot check
-    primary_den_spotcheck = proximal_primary_den.loc[primary_den_rand]
-    
-    # Also used the above to check 10 random distal and 10 random basal dendrites above 2um width
-    # I think we should stick with 1.9 as the cutoff
-
-
-#%%% We want to directly compare the full dataset to the mitos_in_den_df to see what effect the subsetting has
-
-mito_CTL_data = mito_data[mito_data["Genotype"] == "MCC Cre -"].copy()
-
-# Get summary stats for the full CTL dataset
-stats_CTL_data = mito_CTL_data[["Layer", "Area_um_sq", "Feret_diam_um"]].groupby("Layer").agg(["mean", "median", "count"])
-stats_CTL_den_sub = mitos_with_den_df[["Layer", "Area_um_sq", "Feret_diam_um", "Mito_area_per_den_area", "Mito_len_per_den_len"]].groupby("Layer").agg(["mean", "median", "count"])
-
-prop_lost_in_sub =  1- (stats_CTL_den_sub["Area_um_sq", "count"] / stats_CTL_data["Area_um_sq", "count"])
-
-compare_mito_area = pd.concat([stats_CTL_data["Area_um_sq"], stats_CTL_den_sub["Area_um_sq"]], axis=1)
-
-compare_mito_Ferets = pd.concat([stats_CTL_data["Feret_diam_um"], stats_CTL_den_sub["Feret_diam_um"]], axis=1)
-
-#!!! Get the population of mitos that was removed
-
-mito_data["Mito_ID"] = mito_data["Object ID"]
-if "Mito_ID" not in mito_CTL_data.columns:
-    mito_CTL_data["Mito_ID"] = mito_CTL_data["Object ID"]
-
-# Create a unique mito ID by combining tile and mito ID for both dataframes
-mito_CTL_data["Unique_Mito_ID"] = mito_CTL_data["Tile"] + "_" + mito_CTL_data["Mito_ID"]
-mitos_with_den_df["Unique_Mito_ID"] = mitos_with_den_df["Tile"] + "_" + mitos_with_den_df["Mito_ID"]
-
-diff_df = mito_CTL_data[~mito_CTL_data['Unique_Mito_ID'].isin(mitos_with_den_df['Unique_Mito_ID'])]
-
-diff_df_mito_area = diff_df[["Layer", "Area_um_sq"]].groupby("Layer").mean()
-
-
-
-#%%% Normalize the data of interest to the CTL average in a separate dataframe. This data will be used for figure plots in Figure 4 of the manuscript.
-
-print("\nNormalizing the data to the control average (cre -)...")
-
-# Note that as the code is written, the normalization includes layer SO
-
-# Empty dataframe for the normalized data
-norm_to_ctrl = pd.DataFrame(columns = ["Object ID", "Animal", "Stub", "Tile", "Layer", "Genotype", "Norm_Area", "Norm_Diam", "Norm_Aspect", "Norm_Dist"])
-
-# First we need to get the WT mean of all the data for each metric. This is what we will used as the normalization factor. 
-
-# Get the CTL data only
-WT_data = mito_data[mito_data["Genotype"] == "MCC Cre -"]
-# Get the means
-WT_avg = WT_data[["Area_um_sq", "Feret_diam_um", "Aspect_Ratio", "NN_Dist_um"]].mean()
-
-# Normalize individual mito area by the average of the WT control
-mito_data["Norm_Area"] = round(mito_data["Area_um_sq"] / WT_avg["Area_um_sq"], 2)
-# Normalize mito diameter by the WT control
-mito_data["Norm_Diam"] = round(mito_data["Feret_diam_um"] / WT_avg["Feret_diam_um"], 2)
-# Normalize the mito aspect ratio by the WT control
-mito_data["Norm_Aspect"] = round(mito_data["Aspect_Ratio"] / WT_avg["Aspect_Ratio"], 2)
-# Normalize the NN distance by the WT control
-mito_data["Norm_Dist"] = round(mito_data["NN_Dist_um"] / WT_avg["NN_Dist_um"], 2)
-
-print(" done.")
-    
-# Subset the mito_avg dataframe to get just the columns of interest
-# Later in the code, we will add the normalized count and total mito area to this dataframe and save it as a CSV file
-mito_avgs_sub = mito_avgs[['Animal', 'Genotype', 'Layer', 'Stub', 'Section_ID', 'Area_um_sq', 'Major_Length_um', 'Minor_Length_um', 'Feret_diam_um', 'Aspect_Ratio', 'Perimeter_um', 'Count', 'Total_mito_Area_um_sq']]
-# Save as CSV file
-mito_avgs_sub.to_csv(os.path.join(dirName, str("SEM_mito_tile_avgs.csv")), index=True)
-
-# Also save the individual mito data
-# This includes some columns we don't really use, but may want to look at later.
-mito_data_sub = mito_data[['Object ID', 'Tile', 'Animal', 'Genotype', 'Layer', 'Stub', 'Area', 'Area_um_sq', 'Length of Major Axis', 'Length of Minor Axis', 'Major_Length_um', 'Minor_Length_um', 'Feret_diam_um', 'Aspect_Ratio', 'Perimeter_um', 'Dendrite Object parent ID', 'NN_Dist_um', 'NN_ID', 'Eccentricity', 'Average Intensity (channel 1)', 'Norm_Area', 'Norm_Diam', 'Norm_Aspect', 'Norm_Dist']]
-# Save as CSV file
-mito_data_sub.to_csv(os.path.join(dirName, str("SEM_indiv_mito_data.csv")), index=False)
+# Same prism file for the normalized mito Ferets
+mito_Feret_norm_trans = prism_format(data = mito_norm_den_animal_df.reset_index(), data_col = "Mito_len_per_den_len", col="Layer", row= [comparison, "Animal"], file_path = os.path.join(dirName, str("Prism_Trans_Med_Norm_Mito_Feret.csv")))
 
 
 #%%% Let's also take a look at the animal averages and the overall averages by genotype and layer
+
+#!!! Finish clean up of code from here
 
 print("\nGetting animal, section and group averages for metrics of interest...")
 
