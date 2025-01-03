@@ -747,9 +747,9 @@ def get_stats_summary(data, data_col, x_label, save_dir = os.getcwd(), hue_col =
     
     # subset just the most important stats to return
     if normal:
-        summary_tb_sub = round(summary_tb[data_col][["mean", "std", "count"]], 3)
+        summary_tb_sub = round(summary_tb[data_col][["mean", "std", "max", "count"]], 3)
     else:
-        summary_tb_sub = round(summary_tb[data_col][["50%", "std", "count"]], 3).rename(columns={"50%":"median"})
+        summary_tb_sub = round(summary_tb[data_col][["50%", "std", "max", "count"]], 3).rename(columns={"50%":"median"})
     # change count to integer
     summary_tb_sub["count"] = summary_tb_sub["count"].astype("int")
         
