@@ -285,7 +285,7 @@ def WT_KO_violin(data, data_col, save_path, plot_type = "violin", group = "Genot
     
     Required inputs are the dataframe with the data, the name of the data column, and the path to save the violin plot. Note that your dataframe should contain a column called "Layer", as that is what is going to be plotted on the X with your data column on the Y. 
     
-    Optionally, you can change the group column you are comparing across, the range of the Y axis, the units of the Y-axis, the title of the plot and the colors of the groups. The default units are area in microns and the default range is from 0 to 0.5 microns. If you provide colors, make sure the number of colors matches the number of groups. If no grouping, the colors will apply to the three layers. I may add more customization later on.
+    Optionally, you can change the group column you are comparing across, the range of the Y axis, the units of the Y-axis, the title of the plot and the colors of the groups. You can now set the y-range as: [min, max, step size (optional)]. The default units are area in microns and the default range is from 0 to 0.5 microns. If you provide colors, make sure the number of colors matches the number of groups. If no grouping, the colors will apply to the three layers. I may add more customization later on.
     
     Added 8.31.23: This function will perform a standard 2-way ANOVA with Layer and Genotype as factors, then a post hoc comparison of cre + vs cre - within each layer. The significant results will be printed and corresponding significance bars will be added to the plots. The full statistics table will be saved as a CSV with the plot. To run these stats, set stats = 1 (default is to not run any stats and just print the plot).
     
@@ -294,6 +294,8 @@ def WT_KO_violin(data, data_col, save_path, plot_type = "violin", group = "Genot
     Updated 12.4.23: Updated to use the stats function ANOVA_posthoc() above with the corrected posthoc tests. 
     
     Updated 4.16.24: This now has the option to do a boxplot instead of violin plot. Set the variable plot_type to "box" to plot a box plot instead of violin. Violin is default.
+    
+    Updated 8.27.24: ANOVA stats have been removed (will be using the bootstrap instead). Minor aesthetic updates to the violin plots.
     
     '''
     
@@ -398,7 +400,7 @@ def WT_KO_violin(data, data_col, save_path, plot_type = "violin", group = "Genot
         
     # Now we can make the plot!
     if SO and group != 0: # need a bigger figure size
-        fig_size = (5,3)
+        fig_size = (6,5)
     else:
         fig_size = (3,4) # plot will be shorter because only 2 layers or there's no grouping
     fig, ax = plt.subplots(figsize=fig_size) # size of plot
@@ -456,14 +458,13 @@ def WT_KO_violin(data, data_col, save_path, plot_type = "violin", group = "Genot
         plt.setp(ax.lines[1:17:3], color='k', linestyle="solid", linewidth=3)
         
     # set the Y axis range based on the default or provided y_range
-    # if stats == 1:
-    #     y_range[1] += 0.04 # extend y range to account for adding stats bars
-    ax.set_ylim(y_range)
-    ax.tick_params(axis='y', labelsize=16) # set tick label size for Y-axis
-    ax.tick_params(axis='x', labelsize=20)
-    ax.set_ylabel(units, labelpad=10, fontsize=18, fontweight="bold") # set the y axis label with the given units
+    ax.set_ylabel(units, labelpad=10, fontsize=20, fontweight="bold") # set the y axis label with the given units
     ax.set_xlabel(None) # set the x axis label with the given units
-    ax.set_xticks(ticks = np.arange(3), labels=["SO", "SR", "SLM"], fontweight="bold") # remove x-axis label
+    ax.set_xticks(ticks = np.arange(3), labels=["SO", "SR", "SLM"], font="Arial", fontsize=19, fontweight="bold") # remove x-axis label
+    if len(y_range) >2:
+        plt.yticks(np.arange(y_range[0], y_range[1], y_range[2]), font="Arial", fontsize=19, fontweight="bold")
+    elif len(y_range) == 2:
+        plt.yticks(np.arange(y_range[0], y_range[1]), font="Arial", fontsize=19, fontweight="bold")
     
     # if an ANOVA was run and any post hocs were significant, add sig bars to the plot  
     if stats == 1 and not posthoc_sig.empty:
@@ -549,17 +550,12 @@ def WT_KO_violin(data, data_col, save_path, plot_type = "violin", group = "Genot
     # plot a line at Y= 1 if ctl_line is true
     if ctl_line:
         
-        # remove the median lines from the violins
-        # ax.lines[1].remove()
-        # ax.lines[3].remove()
-        # ax.lines[5].remove()
-        
         # Add line at Y=1 for the control
         ax.axhline(y=1, color='k', linestyle=':', lw=2, zorder=-1)
         
         # add lines for the means
         sns.pointplot(x = "Layer", y=data_col, data=plot_data, estimator=mean, color ="k", join=False, scale=0.75)
-    
+
     
     # Remove legend if there's no grouping. The X-axis will say the layers
     if group == 0:
