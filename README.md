@@ -1,5 +1,5 @@
-# sem-mitos
-Quantifying morphometrics of dendritic mitochondria from segmented SEM images.
+# Quantification of dendritic mitochondria morphology
+Quantifying morphometrics of dendritic mitochondria in segmented SEM images from mouse hippocampus.
 
 ## MCU-enriched dendritic mitochondria regulate plasticity in distinct hippocampal circuits
 
